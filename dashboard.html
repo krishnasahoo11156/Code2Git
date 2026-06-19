@@ -330,6 +330,135 @@
     .tabs-nav .btn.active {
       background: var(--surface2); border-color: var(--border); color: var(--text);
     }
+
+    /* Timeline styles */
+    .timeline-group {
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .timeline-group-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .timeline-group-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border2);
+    }
+    .timeline-items {
+      position: relative;
+      padding-left: 20px;
+      border-left: 2px solid var(--border2);
+      margin-left: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .timeline-item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+    }
+    .timeline-item:hover {
+      border-color: var(--border);
+      background: var(--surface2);
+      transform: translateX(4px);
+    }
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -27px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      border: 2.5px solid var(--bg);
+      transition: all 0.2s ease;
+    }
+    .timeline-item:hover::before {
+      background: var(--accent);
+      border-color: var(--bg);
+      transform: translateY(-50%) scale(1.2);
+    }
+    .timeline-item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .timeline-item-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .timeline-item-title {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .timeline-item-title a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .timeline-item-title a:hover {
+      color: var(--accent);
+    }
+    .timeline-item-time {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-leetcode {
+      background: rgba(255, 161, 22, 0.12);
+      color: #ffa116;
+      border: 1px solid rgba(255, 161, 22, 0.2);
+    }
+    .badge-codeforces {
+      background: rgba(88, 166, 255, 0.12);
+      color: #58a6ff;
+      border: 1px solid rgba(88, 166, 255, 0.2);
+    }
+    .badge-geeksforgeeks {
+      background: rgba(46, 164, 79, 0.12);
+      color: #2ea44f;
+      border: 1px solid rgba(46, 164, 79, 0.2);
+    }
+    .badge-hackerrank {
+      background: rgba(188, 140, 255, 0.12);
+      color: #bc8cff;
+      border: 1px solid rgba(188, 140, 255, 0.2);
+    }
   </style>
 </head>
 <body>
@@ -360,6 +489,7 @@
   <div class="tabs-nav animate">
     <button class="btn active" id="btnShowStats">📊 Stats & Activity</button>
     <button class="btn" id="btnShowLeaderboard">🏆 Global Leaderboard</button>
+    <button class="btn" id="btnShowPlatforms">🖥️ Platforms</button>
   </div>
 
   <div id="statsContainer">
@@ -448,6 +578,34 @@
         </div>
       </div>
       <div id="leaderboardBody"></div>
+    </div>
+  </div>
+
+  <!-- ── Platforms Section ───────────────────────────────────────────── -->
+  <div id="platformsContainer" style="display:none;">
+    <!-- Platform Stats Cards Grid -->
+    <div class="stats-grid" id="platformStatsGrid" style="margin-bottom: 28px;">
+      <!-- Platform cards dynamically rendered here -->
+    </div>
+
+    <!-- Timeline History Card -->
+    <div class="history-card animate">
+      <div class="history-header">
+        <div style="display:flex; flex-direction:column; gap:4px">
+          <div class="section-title" style="margin:0">📅 Platform Timeline</div>
+          <div style="font-size:11px;color:var(--text-muted)">Chronological list of problems solved across all coding platforms</div>
+        </div>
+        <div class="history-filter" id="platformTimelineFilter">
+          <button class="filter-btn active" data-platform="all">All</button>
+          <button class="filter-btn" data-platform="LeetCode">LeetCode</button>
+          <button class="filter-btn" data-platform="Codeforces">Codeforces</button>
+          <button class="filter-btn" data-platform="GeeksforGeeks">GeeksforGeeks</button>
+          <button class="filter-btn" data-platform="HackerRank">HackerRank</button>
+        </div>
+      </div>
+      <div id="platformsBody" style="padding: 20px 24px;">
+        <!-- Timeline groups will be dynamically rendered here -->
+      </div>
     </div>
   </div>
 

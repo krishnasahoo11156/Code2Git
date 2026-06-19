@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code2Git — Dashboard</title>
+  <style>
+    /* ── Reset ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0d1117;
+      --surface:    #161b22;
+      --surface2:   #1c2128;
+      --border:     #30363d;
+      --border2:    #21262d;
+      --accent:     #58a6ff;
+      --accent-h:   #388bfd;
+      --green:      #3fb950;
+      --green-dim:  #196c2e;
+      --red:        #f85149;
+      --orange:     #d29922;
+      --purple:     #bc8cff;
+      --text:       #e6edf3;
+      --text-muted: #8b949e;
+      --text-dim:   #484f58;
+      --easy:       #00b8a3;
+      --medium:     #ffa116;
+      --hard:       #ff375f;
+      --radius:     10px;
+      --radius-sm:  6px;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────────── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Header ──────────────────────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 24px;
+      border-bottom: 1px solid var(--border2);
+      margin-bottom: 32px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, #ffa116 0%, #e8940a 100%);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 14px rgba(255,161,22,0.3);
+    }
+    .brand-name {
+      font-size: 20px; font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-sub { font-size: 12px; color: var(--text-dim); }
+    .topbar-right { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: var(--surface2);
+      color: var(--text-muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.15s; text-decoration: none; display: inline-flex;
+      align-items: center; gap: 6px;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.06); }
+    .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-accent:hover { background: var(--accent-h); color: #fff; border-color: var(--accent-h); }
+
+    /* ── Section Titles ──────────────────────────────────────────────── */
+    .section-title {
+      font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--text-muted); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title::after {
+      content: ""; flex: 1; height: 1px; background: var(--border2);
+    }
+
+    /* ── Stats Cards ─────────────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border); transform: translateY(-2px); }
+    .stat-card::before {
+      content: ""; position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: var(--card-accent, var(--accent));
+    }
+    .stat-card .icon {
+      font-size: 22px; margin-bottom: 8px; display: block;
+    }
+    .stat-card .num {
+      font-size: 32px; font-weight: 800; line-height: 1;
+      color: var(--card-accent, var(--accent));
+      margin-bottom: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-card .lbl {
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+    .stat-card .sub {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    }
+
+    /* ── Charts Row ──────────────────────────────────────────────────── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 700px) { .charts-row { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .chart-title {
+      font-size: 13px; font-weight: 700;
+      color: var(--text-muted); margin-bottom: 16px;
+    }
+
+    /* Donut Chart */
+    .donut-wrap {
+      display: flex; align-items: center; gap: 20px;
+    }
+    .donut-svg { flex-shrink: 0; }
+    .donut-legend { flex: 1; }
+    .legend-item {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px; font-size: 12px;
+    }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .legend-label { color: var(--text-muted); flex: 1; }
+    .legend-val { font-weight: 700; color: var(--text); }
+    .legend-pct { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
+
+    /* Bar Chart */
+    .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-label { font-size: 11px; color: var(--text-muted); width: 72px; text-align: right; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.34,1.2,0.64,1); }
+    .bar-count { font-size: 11px; font-weight: 700; color: var(--text); width: 28px; }
+
+    /* ── Heatmap ─────────────────────────────────────────────────────── */
+    .heatmap-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 28px;
+      overflow-x: auto;
+    }
+    .heatmap-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 16px;
+    }
+    .heatmap-streak {
+      font-size: 13px; color: var(--text-muted);
+    }
+    .heatmap-streak span { color: var(--orange); font-weight: 700; }
+    #heatmapGrid {
+      display: flex; gap: 3px;
+    }
+    .heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+    .heatmap-cell {
+      width: 12px; height: 12px; border-radius: 2px;
+      background: var(--surface2);
+      cursor: default;
+      transition: transform 0.1s;
+    }
+    .heatmap-cell:hover { transform: scale(1.4); }
+    .heatmap-cell.lvl-1 { background: #0e4429; }
+    .heatmap-cell.lvl-2 { background: #006d32; }
+    .heatmap-cell.lvl-3 { background: #26a641; }
+    .heatmap-cell.lvl-4 { background: #39d353; }
+    .heatmap-months {
+      display: flex; gap: 3px;
+      margin-bottom: 4px;
+      padding-left: 0;
+    }
+    .heatmap-month-label {
+      font-size: 9px; color: var(--text-dim);
+      width: 12px; text-align: center;
+    }
+
+    /* ── History Table ───────────────────────────────────────────────── */
+    .history-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .history-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--border2);
+    }
+    .history-filter {
+      display: flex; gap: 6px;
+    }
+    .filter-btn {
+      padding: 4px 10px; border-radius: 20px;
+      border: 1px solid var(--border2); background: transparent;
+      color: var(--text-dim); font-size: 11px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .filter-btn:hover:not(.active) { border-color: var(--border); color: var(--text-muted); }
+    table {
+      width: 100%; border-collapse: collapse;
+    }
+    thead th {
+      padding: 10px 20px; text-align: left;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-dim); background: var(--surface2);
+      border-bottom: 1px solid var(--border2);
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border2);
+      transition: background 0.12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    td { padding: 11px 20px; font-size: 13px; vertical-align: middle; }
+    .td-title {
+      font-weight: 600; color: var(--text); max-width: 220px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .td-title a {
+      color: inherit; text-decoration: none;
+    }
+    .td-title a:hover { color: var(--accent); }
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge-easy   { background: rgba(0,184,163,0.15); color: var(--easy); }
+    .badge-medium { background: rgba(255,161,22,0.15); color: var(--medium); }
+    .badge-hard   { background: rgba(255,55,95,0.15);  color: var(--hard); }
+    .badge-lang   { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border2); }
+    .td-muted { color: var(--text-muted); font-size: 12px; }
+    .td-dim   { color: var(--text-dim);   font-size: 11px; }
+    .gh-link {
+      color: var(--accent); text-decoration: none; font-size: 11px;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .gh-link:hover { text-decoration: underline; }
+
+    /* ── Empty State ─────────────────────────────────────────────────── */
+    .empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--text-dim);
+    }
+    .empty .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty .empty-title { font-size: 16px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
+    .empty .empty-sub { font-size: 13px; }
+
+    /* ── Tooltip ─────────────────────────────────────────────────────── */
+    .tooltip {
+      position: fixed; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 6px 10px; font-size: 11px; color: var(--text);
+      pointer-events: none; z-index: 9999; display: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+
+    /* ── Scrollbar ────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Animation ───────────────────────────────────────────────────── */
+    @keyframes fadeInUp {
+      from { opacity:0; transform: translateY(12px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .animate { animation: fadeInUp 0.35s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; opacity:0; }
+    .delay-2 { animation-delay: 0.10s; opacity:0; }
+    .delay-3 { animation-delay: 0.15s; opacity:0; }
+    .delay-4 { animation-delay: 0.20s; opacity:0; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Top Bar ─────────────────────────────────────────────────────── -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo">⚡</div>
+      <div>
+        <div class="brand-name">Code2Git Dashboard</div>
+        <div class="brand-sub">LeetCode → GitHub Auto Sync • v1.0.0</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a id="ghRepoLink" href="#" target="_blank" class="btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+        View Repo
+      </a>
+      <button class="btn btn-accent" onclick="chrome.runtime.openOptionsPage()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Open Popup
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Stats Cards ─────────────────────────────────────────────────── -->
+  <div class="stats-grid">
+    <div class="stat-card animate delay-1" style="--card-accent: var(--green)">
+      <span class="icon">✅</span>
+      <div class="num" id="cardTotal">—</div>
+      <div class="lbl">Total Synced</div>
+      <div class="sub" id="cardTotalSub">All time</div>
+    </div>
+    <div class="stat-card animate delay-2" style="--card-accent: var(--orange)">
+      <span class="icon">🔥</span>
+      <div class="num" id="cardStreak">—</div>
+      <div class="lbl">Day Streak</div>
+      <div class="sub" id="cardStreakSub">Keep it going!</div>
+    </div>
+    <div class="stat-card animate delay-3" style="--card-accent: var(--purple)">
+      <span class="icon">🌐</span>
+      <div class="num" id="cardLangs">—</div>
+      <div class="lbl">Languages Used</div>
+      <div class="sub" id="cardLangsSub">Unique</div>
+    </div>
+    <div class="stat-card animate delay-4" style="--card-accent: var(--accent)">
+      <span class="icon">⏰</span>
+      <div class="num" id="cardLastSync" style="font-size:18px;padding-top:6px">—</div>
+      <div class="lbl">Last Sync</div>
+      <div class="sub" id="cardLastSyncSub">—</div>
+    </div>
+  </div>
+
+  <!-- ── Activity Heatmap ───────────────────────────────────────────── -->
+  <div class="heatmap-card animate">
+    <div class="heatmap-header">
+      <div class="section-title" style="margin:0">📅 Activity — Last 26 Weeks</div>
+      <div class="heatmap-streak">Longest streak: <span id="longestStreak">—</span> days</div>
+    </div>
+    <div id="heatmapMonths" class="heatmap-months"></div>
+    <div id="heatmapGrid"></div>
+  </div>
+
+  <!-- ── Charts Row ─────────────────────────────────────────────────── -->
+  <div class="charts-row animate">
+    <!-- Difficulty Donut -->
+    <div class="chart-card">
+      <div class="chart-title">📊 Difficulty Breakdown</div>
+      <div class="donut-wrap">
+        <svg class="donut-svg" id="donutSvg" width="120" height="120" viewBox="0 0 120 120"></svg>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+
+    <!-- Language Bar Chart -->
+    <div class="chart-card">
+      <div class="chart-title">🔤 Top Languages</div>
+      <div class="bar-chart" id="langBarChart"></div>
+    </div>
+  </div>
+
+  <!-- ── History Table ──────────────────────────────────────────────── -->
+  <div class="history-card animate">
+    <div class="history-header">
+      <div class="section-title" style="margin:0">📋 Recent Submissions</div>
+      <div class="history-filter" id="diffFilter">
+        <button class="filter-btn active" data-diff="all">All</button>
+        <button class="filter-btn" data-diff="Easy">Easy</button>
+        <button class="filter-btn" data-diff="Medium">Medium</button>
+        <button class="filter-btn" data-diff="Hard">Hard</button>
+      </div>
+    </div>
+    <div id="historyBody"></div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

@@ -153,10 +153,11 @@ function renderHeatmap(history) {
   // Start from WEEKS weeks ago, align to Sunday
   const now     = new Date();
   const today   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startDay = new Date(today);
-  startDay.setDate(today.getDate() - (WEEKS * 7 - 1));
-  // Align to Sunday
-  startDay.setDate(startDay.getDate() - startDay.getDay());
+  const endDate = new Date(today);
+  endDate.setDate(today.getDate() + (6 - today.getDay()));
+
+  const startDay = new Date(endDate);
+  startDay.setDate(endDate.getDate() - (WEEKS * 7 - 1));
 
   const maxCount = Math.max(1, ...Object.values(dayMap));
 

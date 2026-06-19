@@ -435,11 +435,17 @@
   </div><!-- /statsContainer -->
 
   <!-- ── Leaderboard Section ─────────────────────────────────────────── -->
-  <div id="leaderboardContainer" class="section-hidden" style="display:none;">
+  <div id="leaderboardContainer" style="display:none;">
     <div class="history-card animate">
       <div class="history-header">
-        <div class="section-title" style="margin:0">🏆 Global Leaderboard Rankings</div>
-        <div style="font-size:11px;color:var(--text-muted)">Real-time rankings based on synced solutions</div>
+        <div style="display:flex; flex-direction:column; gap:4px">
+          <div class="section-title" style="margin:0" id="leaderboardTitle">🏆 Leaderboard Rankings</div>
+          <div style="font-size:11px;color:var(--text-muted)">Real-time rankings based on synced solutions</div>
+        </div>
+        <div class="history-filter" id="leaderboardToggleContainer" style="display:none;">
+          <button class="filter-btn active" id="btnLeaderboardGlobal">🌐 Global</button>
+          <button class="filter-btn" id="btnLeaderboardClub">👥 My Club</button>
+        </div>
       </div>
       <div id="leaderboardBody"></div>
     </div>

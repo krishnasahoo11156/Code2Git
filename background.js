@@ -708,6 +708,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   } else if (msg.type === "GFG_ACCEPTED") {
     handleGfgAccepted(msg.data, sender.tab?.id);
     sendResponse({ ok: true });
+  } else if (msg.type === "FORCE_LEADERBOARD_SYNC") {
+    forceLeaderboardSync();
+    sendResponse({ ok: true });
   }
   return true; // Keep message channel open for async
 });
@@ -1339,10 +1342,7 @@ async function syncToLeaderboard(syncedCount, streakCount) {
     const username = cfg.ghOwner;
     if (!username) return;
 
-    // Use default public Firebase DB to compile a global leaderboard
-    const dbUrl = cfg.leaderboardUrl || "https://code2git-leaderboard-default-rtdb.firebaseio.com";
     const displayName = cfg.displayName || username;
-
     const userPayload = {
       username,
       displayName,
@@ -1352,14 +1352,55 @@ async function syncToLeaderboard(syncedCount, streakCount) {
       avatarUrl: `https://github.com/${username}.png`
     };
 
-    await fetch(`${dbUrl}/leaderboard/${username}.json`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(userPayload)
-    });
-    logDebug(`Sync to leaderboard successful for user ${username}.`);
+    // 1. Sync to default Global Leaderboard database
+    const globalDbUrl = "https://code2git-leaderboard-default-rtdb.firebaseio.com";
+    try {
+      const res = await fetch(`${globalDbUrl}/leaderboard/${username}.json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userPayload)
+      });
+      if (res.ok) {
+        logDebug(`Sync to Global Leaderboard successful for user ${username}.`);
+      } else {
+        logDebug(`Sync to Global Leaderboard failed for user ${username}: HTTP ${res.status}`, LOG_LEVEL.WARN);
+      }
+    } catch (globalErr) {
+      logDebug(`Global Leaderboard sync error: ${globalErr.message}`, LOG_LEVEL.WARN);
+    }
+
+    // 2. Sync to custom Club Leaderboard database (if configured)
+    const customDbUrl = cfg.leaderboardUrl ? cfg.leaderboardUrl.trim().replace(/\/$/, "") : "";
+    if (customDbUrl && customDbUrl !== globalDbUrl) {
+      try {
+        const res = await fetch(`${customDbUrl}/leaderboard/${username}.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userPayload)
+        });
+        if (res.ok) {
+          logDebug(`Sync to Club Leaderboard (${customDbUrl}) successful for user ${username}.`);
+        } else {
+          logDebug(`Sync to Club Leaderboard (${customDbUrl}) failed for user ${username}: HTTP ${res.status}`, LOG_LEVEL.WARN);
+        }
+      } catch (customErr) {
+        logDebug(`Club Leaderboard sync error: ${customErr.message}`, LOG_LEVEL.WARN);
+      }
+    }
   } catch (err) {
     logDebug(`Leaderboard sync error: ${err.message}`, LOG_LEVEL.WARN);
+  }
+}
+
+async function forceLeaderboardSync() {
+  try {
+    const data = await chrome.storage.local.get(["syncedCount", "streakCount"]);
+    const syncedCount = data.syncedCount || 0;
+    const streakCount = data.streakCount || 0;
+    await syncToLeaderboard(syncedCount, streakCount);
+    logDebug("Forced leaderboard sync triggered.");
+  } catch (err) {
+    logDebug(`Forced leaderboard sync error: ${err.message}`, LOG_LEVEL.WARN);
   }
 }
 

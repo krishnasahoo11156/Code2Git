@@ -945,9 +945,26 @@ Increase user engagement by showing their daily streak and introducing a competi
    - If the last sync date was yesterday: increment `streakCount`.
    - If the last sync date was today: do nothing.
    - If the last sync date was more than 1 day ago: reset `streakCount` to 1.
-2. **Shared Leaderboard Backend:**
-   To build a leaderboard, a small backend server is required (e.g., Node.js/Express, Firebase, or Supabase).
-   - When a user syncs a solution, the extension sends a POST request with the user's name, email, and synchronized problem details to your backend API.
-   - The backend stores this in a database, calculates user scores, and serves a `/leaderboard` GET endpoint.
+2. **Shared Leaderboard Backend (Dual System):**
+   - **Default Global Leaderboard:** Points to the shared default Firebase Realtime Database URL: `https://code2git-leaderboard-default-rtdb.firebaseio.com`.
+   - **Private Club Leaderboards:** Users can configure a custom Firebase Realtime Database URL in the settings popup to create a private league.
+   - **REST Syncing Algorithm:**
+     - Whenever a problem is successfully synchronized or connection settings are saved, the extension checks `optInLeaderboard` setting.
+     - If enabled, it compiles a user profile JSON payload:
+       ```json
+       {
+         "username": "krishnasahoo11156",
+         "displayName": "Krish",
+         "syncedCount": 3,
+         "streakCount": 1,
+         "lastSync": 1781913167000,
+         "avatarUrl": "https://github.com/krishnasahoo11156.png"
+       }
+       ```
+     - It PUTs the payload to the Global database: `https://code2git-leaderboard-default-rtdb.firebaseio.com/leaderboard/<github_username>.json`.
+     - If a custom `leaderboardUrl` is configured, it also PUTs the payload to that custom URL: `<custom_leaderboard_url>/leaderboard/<github_username>.json`.
 3. **Display Leaderboard in Dashboard:**
-   In the extension Options/Dashboard page, fetch and display the leaderboard rankings in a sleek table, showing who has the highest streaks and total solved count in the club!
+   - In the extension Options/Dashboard page, fetch and display the leaderboard rankings in a sleek table.
+   - If a custom database URL is configured, a filter toggle bar ("🌐 Global" / "👥 My Club") is displayed to switch between the shared global rankings and private club rankings in real-time.
+   - User profiles are sorted dynamically: first by total solved solutions (`syncedCount` descending), and second by current streak (`streakCount` descending).
+

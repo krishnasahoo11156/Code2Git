@@ -61,6 +61,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     leaderboardContainer.style.display = "block";
     fetchAndRenderLeaderboard();
   });
+
+  // Open Popup button handler (to comply with CSP)
+  const btnOpenPopup = document.getElementById("btnOpenPopup");
+  if (btnOpenPopup) {
+    btnOpenPopup.addEventListener("click", () => {
+      if (chrome.action && typeof chrome.action.openPopup === "function") {
+        chrome.action.openPopup().catch(() => {
+          alert("Click the Code2Git icon in the Chrome toolbar to open the popup.");
+        });
+      } else {
+        alert("Click the Code2Git icon in the Chrome toolbar to open the popup.");
+      }
+    });
+  }
 });
 
 // ─── Utility: Relative time ────────────────────────────────────────────────

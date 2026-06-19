@@ -15,13 +15,15 @@ if (!window.__gfgSyncContentLoaded) {
   // Watch the DOM for success indicators
   const observer = new MutationObserver(() => {
     // Look for success messages like "Problem Solved Successfully" or success modals
+    // Check for exact element containing success message, filtering out container divs via character length
     const successHeader = document.querySelector(".congratulations-modal") || 
                           document.querySelector(".success_message") ||
                           document.querySelector(".solved-status") ||
-                          Array.from(document.querySelectorAll("h3, h4, div")).find(el => 
-                            el.textContent.includes("Problem Solved Successfully") || 
-                            el.textContent.includes("Correct Answer")
-                          );
+                          Array.from(document.querySelectorAll("h3, h4, div, p, span")).find(el => {
+                            const text = el.textContent.trim();
+                            return (text.includes("Problem Solved Successfully") || text.includes("Correct Answer")) &&
+                                   text.length < 50;
+                          });
 
     if (successHeader && !window.__gfgProcessed) {
       window.__gfgProcessed = true;
@@ -33,8 +35,16 @@ if (!window.__gfgSyncContentLoaded) {
 
   // Reset flag when user changes code or clicks reset/submits again
   document.addEventListener("click", (e) => {
-    if (e.target.closest("button") && 
-       (e.target.textContent.includes("Submit") || e.target.textContent.includes("Compile"))) {
+    const text = e.target.textContent || "";
+    // Match any click on button or div containing Submit/Compile/Run
+    if (text.includes("Submit") || text.includes("Compile") || text.includes("Run")) {
+      window.__gfgProcessed = false;
+    }
+  });
+
+  // Reset flag on keyboard shortcuts that compile or submit
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       window.__gfgProcessed = false;
     }
   });

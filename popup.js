@@ -24,14 +24,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadConfig() {
   const data = await chrome.storage.local.get([
     "ghToken", "ghOwner", "ghRepo", "ghBranch",
-    "connMethod", "clientId", "oauthStatus"
+    "connMethod", "clientId", "oauthStatus",
+    "cfHandle", "displayName", "leaderboardUrl", "optInLeaderboard"
   ]);
 
-  if (data.ghToken)   $("token").value    = data.ghToken;
-  if (data.ghOwner)   $("owner").value    = data.ghOwner;
-  if (data.ghRepo)    $("repo").value     = data.ghRepo;
-  if (data.ghBranch)  $("branch").value   = data.ghBranch;
-  if (data.clientId)  $("clientId").value = data.clientId;
+  if (data.ghToken)          $("token").value    = data.ghToken;
+  if (data.ghOwner)          $("owner").value    = data.ghOwner;
+  if (data.ghRepo)           $("repo").value     = data.ghRepo;
+  if (data.ghBranch)         $("branch").value   = data.ghBranch;
+  if (data.clientId)         $("clientId").value = data.clientId;
+  if (data.cfHandle)         $("cfHandle").value = data.cfHandle;
+  if (data.displayName)      $("displayName").value = data.displayName;
+  if (data.leaderboardUrl)   $("leaderboardUrl").value = data.leaderboardUrl;
+  $("optInLeaderboard").checked = data.optInLeaderboard !== false;
 
   // Restore connection method
   switchTab(data.connMethod === "oauth" ? "oauth" : "token");
@@ -192,6 +197,10 @@ async function saveConfig() {
   const owner    = $("owner").value.trim();
   const repo     = $("repo").value.trim();
   const branch   = $("branch").value.trim() || "main";
+  const cfHandle = $("cfHandle").value.trim();
+  const displayName = $("displayName").value.trim();
+  const leaderboardUrl = $("leaderboardUrl").value.trim();
+  const optInLeaderboard = $("optInLeaderboard").checked;
 
   // Validate
   const tokenErr = validateTokenFormat(token);
@@ -212,7 +221,14 @@ async function saveConfig() {
   saveBtn.innerHTML = `<span class="spinner"></span> Saving…`;
 
   await chrome.storage.local.set({
-    ghToken: token, ghOwner: owner, ghRepo: repo, ghBranch: branch,
+    ghToken: token,
+    ghOwner: owner,
+    ghRepo: repo,
+    ghBranch: branch,
+    cfHandle,
+    displayName,
+    leaderboardUrl,
+    optInLeaderboard,
     connMethod: "token"
   });
 
@@ -291,6 +307,10 @@ async function startDeviceFlow() {
   const owner    = $("owner").value.trim();
   const repo     = $("repo").value.trim();
   const branch   = $("branch").value.trim() || "main";
+  const cfHandle = $("cfHandle").value.trim();
+  const displayName = $("displayName").value.trim();
+  const leaderboardUrl = $("leaderboardUrl").value.trim();
+  const optInLeaderboard = $("optInLeaderboard").checked;
 
   if (!clientId) {
     showStatus("Please enter your GitHub OAuth App Client ID.", true);
@@ -302,6 +322,18 @@ async function startDeviceFlow() {
     showStatus("Please fill in valid GitHub username and repository name.", true);
     return;
   }
+
+  // Save config values locally immediately
+  await chrome.storage.local.set({
+    ghOwner: owner,
+    ghRepo: repo,
+    ghBranch: branch,
+    cfHandle,
+    displayName,
+    leaderboardUrl,
+    optInLeaderboard,
+    connMethod: "oauth"
+  });
 
   const btn = $("oauthConnectBtn");
   btn.disabled = true;

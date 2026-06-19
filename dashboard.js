@@ -666,6 +666,70 @@ async function fetchAndRenderLeaderboard() {
       </table>
     `;
   } catch (err) {
-    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load leaderboard</div><div class="empty-sub">${err.message}</div></div>`;
+    try {
+      const localData = await chrome.storage.local.get([
+        "ghOwner", "displayName", "syncedCount", "streakCount", "lastSync"
+      ]);
+
+      if (localData.ghOwner || localData.displayName) {
+        const username = localData.ghOwner || "local_user";
+        const displayName = localData.displayName || username;
+        const syncedCount = Number(localData.syncedCount || 0);
+        const streakCount = Number(localData.streakCount || 0);
+        const relativeSync = localData.lastSync ? relativeTime(localData.lastSync) : "Never";
+        const userRepoUrl = localData.ghOwner ? `https://github.com/${localData.ghOwner}` : "#";
+        const avatarUrl = localData.ghOwner ? `https://github.com/${localData.ghOwner}.png` : "icons/icon128.png";
+
+        const rowHtml = `
+          <tr>
+            <td class="td-dim" style="font-weight:bold;font-size:14px;text-align:center;width:40px;">🥇</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <img src="${avatarUrl}" width="26" height="26" style="border-radius:50%;border:1px solid var(--border);" onerror="this.src='icons/icon128.png'" />
+                <div style="font-weight:600;color:var(--text)">${displayName} <span style="font-size:11px;color:var(--text-muted);font-weight:normal;">(You - Local fallback)</span></div>
+              </div>
+            </td>
+            <td style="font-weight:700;color:var(--green);font-size:14px;">${syncedCount}</td>
+            <td style="color:var(--orange);font-weight:600;">🔥 ${streakCount} day${streakCount !== 1 ? 's' : ''}</td>
+            <td class="td-dim">${relativeSync}</td>
+            <td>
+              <a class="gh-link" href="${userRepoUrl}" target="_blank">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                </svg> Profile
+              </a>
+            </td>
+          </tr>
+        `;
+
+        container.innerHTML = `
+          <div style="background:rgba(210,153,34,0.1); border:1px solid rgba(210,153,34,0.25); border-radius:var(--radius-sm); padding:14px; margin-bottom:20px; font-size:13px; line-height:1.5; color:var(--text);">
+            <div style="font-weight:700; color:var(--orange); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+              ⚠️ Leaderboard database not reachable
+            </div>
+            We could not fetch the online leaderboard rankings (Database returned: ${err.message}).
+            To see online rankings, make sure your Firebase Realtime Database is created, allows public reads, and matches the URL in extension settings. Showing your local stats as a fallback:
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center;">Rank</th>
+                <th>Coder</th>
+                <th>Solved</th>
+                <th>Streak</th>
+                <th>Last Active</th>
+                <th>GitHub</th>
+              </tr>
+            </thead>
+            <tbody>${rowHtml}</tbody>
+          </table>
+        `;
+      } else {
+        container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load leaderboard</div><div class="empty-sub">${err.message}</div></div>`;
+      }
+    } catch (fallbackErr) {
+      container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load leaderboard</div><div class="empty-sub">${err.message}</div></div>`;
+    }
   }
 }
+

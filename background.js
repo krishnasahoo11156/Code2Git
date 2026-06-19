@@ -1355,12 +1355,16 @@ async function syncToLeaderboard(syncedCount, streakCount) {
     // 1. Sync to default Global Leaderboard database
     const globalDbUrl = "https://code2git-leaderboard-default-rtdb.firebaseio.com";
     try {
-      await fetch(`${globalDbUrl}/leaderboard/${username}.json`, {
+      const res = await fetch(`${globalDbUrl}/leaderboard/${username}.json`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userPayload)
       });
-      logDebug(`Sync to Global Leaderboard successful for user ${username}.`);
+      if (res.ok) {
+        logDebug(`Sync to Global Leaderboard successful for user ${username}.`);
+      } else {
+        logDebug(`Sync to Global Leaderboard failed for user ${username}: HTTP ${res.status}`, LOG_LEVEL.WARN);
+      }
     } catch (globalErr) {
       logDebug(`Global Leaderboard sync error: ${globalErr.message}`, LOG_LEVEL.WARN);
     }
@@ -1369,12 +1373,16 @@ async function syncToLeaderboard(syncedCount, streakCount) {
     const customDbUrl = cfg.leaderboardUrl ? cfg.leaderboardUrl.trim().replace(/\/$/, "") : "";
     if (customDbUrl && customDbUrl !== globalDbUrl) {
       try {
-        await fetch(`${customDbUrl}/leaderboard/${username}.json`, {
+        const res = await fetch(`${customDbUrl}/leaderboard/${username}.json`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(userPayload)
         });
-        logDebug(`Sync to Club Leaderboard (${customDbUrl}) successful for user ${username}.`);
+        if (res.ok) {
+          logDebug(`Sync to Club Leaderboard (${customDbUrl}) successful for user ${username}.`);
+        } else {
+          logDebug(`Sync to Club Leaderboard (${customDbUrl}) failed for user ${username}: HTTP ${res.status}`, LOG_LEVEL.WARN);
+        }
       } catch (customErr) {
         logDebug(`Club Leaderboard sync error: ${customErr.message}`, LOG_LEVEL.WARN);
       }

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeetCode → GitHub Sync</title>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2128;
+      --border:    #30363d;
+      --border2:   #21262d;
+      --accent:    #58a6ff;
+      --accent-h:  #388bfd;
+      --green:     #3fb950;
+      --red:       #f85149;
+      --orange:    #d29922;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --text-dim:  #484f58;
+      --radius:    8px;
+    }
+
+    body {
+      width: 380px;
+      min-height: 200px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border2);
+      background: var(--surface);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-logo {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, #ffa116 0%, #f0a500 100%);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .header-version {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 1px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+    .status-pill.connected {
+      background: rgba(63, 185, 80, 0.12);
+      border-color: rgba(63, 185, 80, 0.3);
+      color: var(--green);
+    }
+    .status-pill.disconnected {
+      background: rgba(248, 81, 73, 0.1);
+      border-color: rgba(248, 81, 73, 0.25);
+      color: var(--red);
+    }
+    .status-pill.checking {
+      background: rgba(88, 166, 255, 0.1);
+      border-color: rgba(88, 166, 255, 0.25);
+      color: var(--accent);
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .status-dot.pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── LeetCode Status Bar ─────────────────────────────────────────── */
+    #lcStatusBar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border2);
+    }
+    #lcStatusBar svg { flex-shrink: 0; }
+    #lcStatusText { flex: 1; }
+
+    /* ── Body Padding ────────────────────────────────────────────────── */
+    .body { padding: 14px 16px; }
+
+    /* ── Section Label ───────────────────────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    /* ── Tabs ────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 1px;
+      background: var(--border2);
+      border-radius: var(--radius);
+      padding: 3px;
+      margin-bottom: 14px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      font-family: inherit;
+    }
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .tab-btn:hover:not(.active) {
+      color: var(--text);
+    }
+
+    /* ── Form Fields ─────────────────────────────────────────────────── */
+    .field { margin-bottom: 10px; }
+    .field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .field-input-wrap {
+      position: relative;
+    }
+    .field-input-wrap input {
+      width: 100%;
+      padding: 8px 34px 8px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .field-input-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.12);
+    }
+    .field-input-wrap input.error {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(248, 81, 73, 0.1);
+    }
+    .field-input-wrap input.valid {
+      border-color: var(--green);
+    }
+    .reveal-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-dim);
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s;
+    }
+    .reveal-btn:hover { color: var(--text-muted); }
+    .field-hint {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .field-hint a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .field-hint a:hover { text-decoration: underline; }
+    .field-error {
+      font-size: 10px;
+      color: var(--red);
+      margin-top: 3px;
+      display: none;
+    }
+    .field-error.visible { display: block; }
+
+    /* ── Regular inputs (no wrap needed) ────────────────────────────── */
+    input.plain {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input.plain:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.12);
+    }
+
+    /* ── OAuth Activation Box ────────────────────────────────────────── */
+    #oauthActivation {
+      display: none;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-top: 12px;
+      text-align: center;
+    }
+    #oauthActivation .code-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    #oauthUserCode {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      font-family: "SF Mono", "Consolas", monospace;
+      margin: 6px 0 10px;
+    }
+    #oauthTimer {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────────────────── */
+    .btn {
+      width: 100%;
+      padding: 9px 12px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      margin-top: 14px;
+    }
+    .btn-primary:hover { background: var(--accent-h); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(88, 166, 255, 0.06);
+    }
+    .btn-danger {
+      background: transparent;
+      border: 1px solid rgba(248, 81, 73, 0.3);
+      color: var(--red);
+      margin-top: 6px;
+    }
+    .btn-danger:hover {
+      background: rgba(248, 81, 73, 0.08);
+    }
+    .btn-oauth {
+      background: #24292f;
+      color: #fff;
+      border: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    .btn-oauth:hover { background: #2c3138; }
+    .btn-sm {
+      width: auto;
+      padding: 5px 12px;
+      font-size: 11px;
+    }
+
+    /* ── Status Message ──────────────────────────────────────────────── */
+    #statusMsg {
+      margin-top: 10px;
+      font-size: 12px;
+      min-height: 18px;
+      padding: 0 2px;
+      transition: color 0.2s;
+    }
+
+    /* ── Divider ─────────────────────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border2);
+      margin: 14px 0;
+    }
+
+    /* ── Stats Row ───────────────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border2);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .stat-cell {
+      background: var(--surface2);
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .stat-cell .num {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+    .stat-cell .num.streak { color: var(--orange); }
+    .stat-cell .num.green  { color: var(--green); }
+    .stat-cell .lbl {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    /* ── Log Panel ───────────────────────────────────────────────────── */
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .log-actions { display: flex; gap: 6px; align-items: center; }
+    .log-action-btn {
+      font-size: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .log-action-btn.clear { color: var(--red); }
+    .log-action-btn.copy { color: var(--text-dim); }
+    .log-action-btn:hover { background: var(--surface2); }
+    #logPanel {
+      font-size: 10px;
+      font-family: "SF Mono", Consolas, monospace;
+      background: var(--surface2);
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      max-height: 110px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #c9d1d9;
+      border: 1px solid var(--border2);
+      line-height: 1.5;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    #logPanel .log-INFO    { color: #8b949e; }
+    #logPanel .log-WARN    { color: var(--orange); }
+    #logPanel .log-ERROR   { color: var(--red); }
+    #logPanel .log-SUCCESS { color: var(--green); }
+
+    /* ── Footer ──────────────────────────────────────────────────────── */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      border-top: 1px solid var(--border2);
+      background: var(--surface);
+    }
+    .footer a {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer a:hover { color: var(--accent); }
+
+    /* ── Spinner ─────────────────────────────────────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    /* ── Section visibility ──────────────────────────────────────────── */
+    .section-hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ────────────────────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">⚡</div>
+      <div>
+        <div class="header-title">Code2Git</div>
+        <div class="header-version">LeetCode → GitHub • v1.0.0</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="ghStatusPill" class="status-pill disconnected">
+        <div class="status-dot" id="ghStatusDot"></div>
+        <span id="ghStatusText">Not connected</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LeetCode Status Bar ───────────────────────────────────────── -->
+  <div id="lcStatusBar">
+    <svg width="12" height="12" viewBox="0 0 95 111" fill="none">
+      <path d="M68.5 65.5L46 88H27L5 65.5 27 43h19l22.5 22.5z" fill="#ffa116"/>
+      <path d="M47 22.5L68.5 1H88l6.5 21.5-22 21.5H53L47 22.5z" fill="#ffa116" opacity=".7"/>
+    </svg>
+    <span id="lcStatusText">Checking LeetCode login...</span>
+    <span id="lcLoginLink" style="display:none">
+      <a href="https://leetcode.com/accounts/login/" target="_blank" style="color:var(--accent);text-decoration:none">Login →</a>
+    </span>
+  </div>
+
+  <!-- ── Main Body ─────────────────────────────────────────────────── -->
+  <div class="body">
+
+    <!-- ── Connection Tabs ─────────────────────────────────────────── -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tabToken">🔑 Personal Token</button>
+      <button class="tab-btn" id="tabOauth">🔐 OAuth Device</button>
+    </div>
+
+    <!-- ── PAT Section ─────────────────────────────────────────────── -->
+    <div id="patSection">
+      <div class="field">
+        <label class="field-label" for="token">GitHub Personal Access Token</label>
+        <div class="field-input-wrap">
+          <input id="token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+          <button class="reveal-btn" id="revealTokenBtn" title="Show/Hide token">
+            <svg id="eyeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="field-error" id="tokenError"></div>
+        <div class="field-hint">
+          Needs <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;font-size:10px">repo</code> scope.
+          <a href="https://github.com/settings/tokens/new?scopes=repo&description=Code2Git-LeetCode-Sync" target="_blank">Create one here →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OAuth Section ───────────────────────────────────────────── -->
+    <div id="oauthSection" class="section-hidden">
+      <div class="field">
+        <label class="field-label" for="clientId">GitHub OAuth App — Client ID</label>
+        <input id="clientId" type="text" class="plain" placeholder="Ov23wp..." autocomplete="off" spellcheck="false" />
+        <div class="field-hint">
+          Enable <strong>Device Flow</strong> in your
+          <a href="https://github.com/settings/developers" target="_blank">OAuth App settings →</a>
+        </div>
+      </div>
+
+      <!-- OAuth Activation card (shown after clicking Connect) -->
+      <div id="oauthActivation">
+        <div class="code-label">Your Activation Code</div>
+        <div id="oauthUserCode">─────────</div>
+        <div id="oauthTimer">Expires in <span id="oauthCountdown">—</span>s</div>
+        <div class="field-hint" style="margin-bottom:10px">
+          Click the button below, then enter this code on GitHub.
+        </div>
+        <button class="btn btn-oauth btn-sm" id="oauthVerifyBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+          Authorize on GitHub
+        </button>
+        <div id="oauthPollStatus" style="font-size:10px;color:var(--text-muted);margin-top:8px">
+          Waiting for authorization...
+        </div>
+      </div>
+
+      <button class="btn btn-oauth" id="oauthConnectBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+        Connect with GitHub
+      </button>
+    </div>
+
+    <!-- ── Shared Config ────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <div id="sharedConfig">
+      <div class="field">
+        <label class="field-label" for="owner">GitHub Username / Org</label>
+        <input id="owner" type="text" class="plain" placeholder="your-username" autocomplete="off" spellcheck="false" />
+        <div class="field-error" id="ownerError"></div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="repo">Repository Name</label>
+        <input id="repo" type="text" class="plain" placeholder="leetcode-solutions" autocomplete="off" spellcheck="false" />
+        <div class="field-error" id="repoError"></div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="branch">Branch</label>
+        <input id="branch" type="text" class="plain" placeholder="main" autocomplete="off" spellcheck="false" />
+        <div class="field-hint">Leave blank to use <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;font-size:10px">main</code></div>
+      </div>
+
+      <button class="btn btn-primary" id="saveBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Settings
+      </button>
+      <button class="btn btn-secondary" id="testBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Test Connection
+      </button>
+    </div>
+
+    <!-- ── Status Message ──────────────────────────────────────────── -->
+    <div id="statusMsg"></div>
+
+    <!-- ── Stats Row ───────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="num green" id="syncedCount">0</div>
+        <div class="lbl">Synced</div>
+      </div>
+      <div class="stat-cell">
+        <div class="num streak" id="streakCount">0</div>
+        <div class="lbl">🔥 Streak</div>
+      </div>
+      <div class="stat-cell">
+        <div class="num" id="lastSync" style="font-size:11px;padding-top:4px">—</div>
+        <div class="lbl">Last Sync</div>
+      </div>
+    </div>
+
+    <!-- ── Dashboard Link ──────────────────────────────────────────── -->
+    <button class="btn btn-secondary" id="openDashboardBtn" style="margin-bottom:12px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Open Dashboard
+    </button>
+
+    <!-- ── Debug Logs ───────────────────────────────────────────────── -->
+    <div class="log-header">
+      <span class="section-label" style="margin:0">Debug Logs</span>
+      <div class="log-actions">
+        <button class="log-action-btn copy" id="copyLogsBtn">Copy</button>
+        <button class="log-action-btn clear" id="clearLogsBtn">Clear</button>
+      </div>
+    </div>
+    <div id="logPanel">No logs yet.</div>
+
+  </div><!-- /body -->
+
+  <!-- ── Footer ────────────────────────────────────────────────────── -->
+  <div class="footer">
+    <a href="https://github.com/krishnasahoo11156/Code2Git" target="_blank">GitHub Repo</a>
+    <a href="https://github.com/krishnasahoo11156/Code2Git/issues" target="_blank">Report a Bug</a>
+    <a href="#" id="footerDashboard">Dashboard</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

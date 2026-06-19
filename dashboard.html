@@ -455,9 +455,211 @@
       border: 1px solid rgba(46, 164, 79, 0.2);
     }
     .badge-hackerrank {
-      background: rgba(188, 140, 255, 0.12);
-      color: #bc8cff;
       border: 1px solid rgba(188, 140, 255, 0.2);
+    }
+
+    /* ── Share Card Styles ───────────────────────────────────────────── */
+    .share-row {
+      margin-bottom: 28px;
+    }
+    .share-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+    }
+    .share-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .share-btn-wrapper {
+      position: relative;
+    }
+    .btn-share {
+      background: linear-gradient(135deg, rgba(188, 140, 255, 0.2) 0%, rgba(88, 166, 255, 0.2) 100%);
+      border: 1px solid var(--purple);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-share:hover {
+      background: linear-gradient(135deg, rgba(188, 140, 255, 0.35) 0%, rgba(88, 166, 255, 0.35) 100%);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(88, 166, 255, 0.2);
+    }
+    .share-dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 170px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .share-dropdown-item {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+      width: 100%;
+      font-family: inherit;
+    }
+    .share-dropdown-item:hover {
+      background: rgba(88, 166, 255, 0.1);
+      color: var(--text);
+    }
+    .share-content-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .share-content-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .share-stats-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .share-stats-microgrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .share-stat-mini-card {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      text-align: center;
+    }
+    .share-stat-mini-card .val {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .share-stat-mini-card .val.green { color: var(--green); }
+    .share-stat-mini-card .val.orange { color: var(--orange); }
+    .share-stat-mini-card .val.purple { color: var(--purple); }
+    .share-stat-mini-card .lbl {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .share-platforms-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+    }
+    .share-platform-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .share-platform-name {
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .share-platform-count {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .share-questions-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .share-questions-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .share-questions-list {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      max-height: 230px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .share-question-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+      padding-bottom: 6px;
+    }
+    .share-question-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .share-question-name {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    .share-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 9999;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+      animation: fadeInUp 0.2s ease;
     }
   </style>
 </head>
@@ -546,6 +748,81 @@
     <div class="chart-card">
       <div class="chart-title">🔤 Top Languages</div>
       <div class="bar-chart" id="langBarChart"></div>
+    </div>
+  </div>
+
+  <!-- ── Share Achievements Card ───────────────────────────────────── -->
+  <div class="share-row animate delay-4">
+    <div class="share-card">
+      <div class="share-card-header">
+        <div class="section-title" style="margin:0">🏆 Share Your Achievements</div>
+        <div class="share-btn-wrapper">
+          <button id="btnShareAchievements" class="btn-share">
+            <svg class="share-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11z"/>
+            </svg>
+            Share Card
+          </button>
+          <div class="share-dropdown" id="shareDropdown">
+            <button class="share-dropdown-item" id="btnShareWhatsApp">
+              🟢 Share via WhatsApp
+            </button>
+            <button class="share-dropdown-item" id="btnShareNative">
+              📲 System Share
+            </button>
+            <button class="share-dropdown-item" id="btnShareCopy">
+              📋 Copy Stats Text
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="share-content-layout">
+        <!-- Left Side: Stats Grid & Platforms -->
+        <div class="share-stats-summary">
+          <div class="share-stats-microgrid">
+            <div class="share-stat-mini-card">
+              <div class="val green" id="shareTotalSolved">—</div>
+              <div class="lbl">Total Solved</div>
+            </div>
+            <div class="share-stat-mini-card">
+              <div class="val orange" id="shareCurrentStreak">—</div>
+              <div class="lbl">Current Streak</div>
+            </div>
+            <div class="share-stat-mini-card">
+              <div class="val purple" id="shareLongestStreak">—</div>
+              <div class="lbl">Longest Streak</div>
+            </div>
+          </div>
+          
+          <div class="share-platforms-list">
+            <div class="share-platform-row">
+              <div class="share-platform-name">🟠 LeetCode</div>
+              <div class="share-platform-count" id="shareCountLeetCode">0</div>
+            </div>
+            <div class="share-platform-row">
+              <div class="share-platform-name">🔵 Codeforces</div>
+              <div class="share-platform-count" id="shareCountCodeforces">0</div>
+            </div>
+            <div class="share-platform-row">
+              <div class="share-platform-name">🟢 GeeksforGeeks</div>
+              <div class="share-platform-count" id="shareCountGeeksforGeeks">0</div>
+            </div>
+            <div class="share-platform-row">
+              <div class="share-platform-name">🟣 HackerRank</div>
+              <div class="share-platform-count" id="shareCountHackerRank">0</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Right Side: Attempted Questions -->
+        <div class="share-questions-column">
+          <div class="share-questions-title">📝 Attempted & Synced Questions</div>
+          <div class="share-questions-list" id="shareQuestionsList">
+            <div style="text-align:center;padding:20px;color:var(--text-dim);">No questions synced yet</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

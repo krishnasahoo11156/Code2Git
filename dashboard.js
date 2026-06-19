@@ -40,6 +40,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderLangBarChart(history);
   renderHistoryTable(history, ghOwner, ghRepo, ghBranch);
   setupDiffFilter(history, ghOwner, ghRepo, ghBranch);
+
+  // Tabs Navigation
+  const btnShowStats = document.getElementById("btnShowStats");
+  const btnShowLeaderboard = document.getElementById("btnShowLeaderboard");
+  const statsContainer = document.getElementById("statsContainer");
+  const leaderboardContainer = document.getElementById("leaderboardContainer");
+
+  btnShowStats.addEventListener("click", () => {
+    btnShowStats.classList.add("active");
+    btnShowLeaderboard.classList.remove("active");
+    statsContainer.style.display = "block";
+    leaderboardContainer.style.display = "none";
+  });
+
+  btnShowLeaderboard.addEventListener("click", () => {
+    btnShowLeaderboard.classList.add("active");
+    btnShowStats.classList.remove("active");
+    statsContainer.style.display = "none";
+    leaderboardContainer.style.display = "block";
+    fetchAndRenderLeaderboard();
+  });
 });
 
 // ─── Utility: Relative time ────────────────────────────────────────────────
@@ -103,6 +124,8 @@ function computeLongestStreak(history) {
 function renderHeatmap(history) {
   const grid    = document.getElementById("heatmapGrid");
   const months  = document.getElementById("heatmapMonths");
+  grid.innerHTML = "";
+  months.innerHTML = "";
   const WEEKS   = 26;
   const tooltip = document.getElementById("tooltip");
 
@@ -177,12 +200,11 @@ function renderHeatmap(history) {
   }
 
   // Render month labels (positioned over correct columns)
-  const cellSize = 15; // 12px cell + 3px gap
   monthLabels.forEach(({ week, month }) => {
     const lbl = document.createElement("div");
     lbl.className   = "heatmap-month-label";
     lbl.textContent = month;
-    lbl.style.minWidth = `${cellSize}px`;
+    lbl.style.left = `${week * 15}px`;
     months.appendChild(lbl);
   });
 }
@@ -191,6 +213,7 @@ function renderHeatmap(history) {
 function renderDonutChart(history) {
   const svg    = document.getElementById("donutSvg");
   const legend = document.getElementById("donutLegend");
+  svg.innerHTML = "";
 
   const counts = { Easy: 0, Medium: 0, Hard: 0 };
   history.forEach(e => {
@@ -473,8 +496,89 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     renderHeatmap(history);
     renderDonutChart(history);
     renderLangBarChart(history);
-    // Re-render table with current active filter
     const activeFilter = document.querySelector(".filter-btn.active")?.dataset.diff || "all";
     renderHistoryTable(history, data.ghOwner || "", data.ghRepo || "", data.ghBranch || "main", activeFilter);
+    
+    // Also refresh leaderboard if it is currently visible
+    const leaderboardContainer = document.getElementById("leaderboardContainer");
+    if (leaderboardContainer && leaderboardContainer.style.display !== "none") {
+      fetchAndRenderLeaderboard();
+    }
   }
 });
+
+// ─── Leaderboard Fetch & Render ───────────────────────────────────────────
+async function fetchAndRenderLeaderboard() {
+  const container = document.getElementById("leaderboardBody");
+  container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);"><span class="spinner"></span> Loading leaderboard rankings…</div>`;
+
+  try {
+    const data = await chrome.storage.local.get(["leaderboardUrl"]);
+    const dbUrl = data.leaderboardUrl || "https://code2git-leaderboard-default-rtdb.firebaseio.com";
+    const res = await fetch(`${dbUrl}/leaderboard.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const users = await res.json();
+    if (!users) {
+      container.innerHTML = `<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">Leaderboard is empty</div><div class="empty-sub">Be the first to sync a solution!</div></div>`;
+      return;
+    }
+
+    const sortedUsers = Object.values(users).sort((a, b) => {
+      if (b.syncedCount !== a.syncedCount) return b.syncedCount - a.syncedCount;
+      return b.streakCount - a.streakCount;
+    });
+
+    const rows = sortedUsers.map((user, i) => {
+      const rank = i + 1;
+      let rankBadge = `${rank}`;
+      if (rank === 1) rankBadge = "🥇";
+      else if (rank === 2) rankBadge = "🥈";
+      else if (rank === 3) rankBadge = "🥉";
+
+      const relativeSync = user.lastSync ? relativeTime(user.lastSync) : "—";
+      const userRepoUrl = `https://github.com/${user.username}`;
+      const avatarUrl = user.avatarUrl || `https://github.com/${user.username}.png`;
+
+      return `
+        <tr>
+          <td class="td-dim" style="font-weight:bold;font-size:14px;text-align:center;width:40px;">${rankBadge}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <img src="${avatarUrl}" width="26" height="26" style="border-radius:50%;border:1px solid var(--border);" onerror="this.src='icons/icon128.png'" />
+              <div style="font-weight:600;color:var(--text)">${user.displayName || user.username}</div>
+            </div>
+          </td>
+          <td style="font-weight:700;color:var(--green);font-size:14px;">${user.syncedCount}</td>
+          <td style="color:var(--orange);font-weight:600;">🔥 ${user.streakCount} day${user.streakCount !== 1 ? 's' : ''}</td>
+          <td class="td-dim">${relativeSync}</td>
+          <td>
+            <a class="gh-link" href="${userRepoUrl}" target="_blank">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+              </svg> Profile
+            </a>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:center;">Rank</th>
+            <th>Coder</th>
+            <th>Solved</th>
+            <th>Streak</th>
+            <th>Last Active</th>
+            <th>GitHub</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load leaderboard</div><div class="empty-sub">${err.message}</div></div>`;
+  }
+}

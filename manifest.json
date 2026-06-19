@@ -15,7 +15,12 @@
   "host_permissions": [
     "https://leetcode.com/*",
     "https://api.github.com/*",
-    "https://github.com/*"
+    "https://github.com/*",
+    "https://codeforces.com/*",
+    "https://*.codeforces.com/*",
+    "https://www.hackerrank.com/*",
+    "https://*.geeksforgeeks.org/*",
+    "https://practiceapi.geeksforgeeks.org/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -24,6 +29,20 @@
     {
       "matches": ["https://leetcode.com/problems/*"],
       "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://codeforces.com/contest/*/problem/*",
+        "https://codeforces.com/problemset/problem/*/*",
+        "https://codeforces.com/problemset/problem/*"
+      ],
+      "js": ["content_cf.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://*.geeksforgeeks.org/problems/*"],
+      "js": ["content_gfg.js"],
       "run_at": "document_idle"
     }
   ],

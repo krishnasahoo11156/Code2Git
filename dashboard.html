@@ -210,13 +210,15 @@
     .heatmap-cell.lvl-3 { background: #26a641; }
     .heatmap-cell.lvl-4 { background: #39d353; }
     .heatmap-months {
-      display: flex; gap: 3px;
+      position: relative;
+      height: 18px;
       margin-bottom: 4px;
-      padding-left: 0;
     }
     .heatmap-month-label {
-      font-size: 9px; color: var(--text-dim);
-      width: 12px; text-align: center;
+      position: absolute;
+      font-size: 9px;
+      color: var(--text-dim);
+      white-space: nowrap;
     }
 
     /* ── History Table ───────────────────────────────────────────────── */
@@ -319,6 +321,18 @@
     .delay-2 { animation-delay: 0.10s; opacity:0; }
     .delay-3 { animation-delay: 0.15s; opacity:0; }
     .delay-4 { animation-delay: 0.20s; opacity:0; }
+    
+    .section-hidden { display: none !important; }
+    
+    .tabs-nav {
+      display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border2); padding-bottom: 12px;
+    }
+    .tabs-nav .btn {
+      background: transparent; border-color: transparent; color: var(--text-muted); cursor: pointer;
+    }
+    .tabs-nav .btn.active {
+      background: var(--surface2); border-color: var(--border); color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -345,8 +359,15 @@
     </div>
   </div>
 
-  <!-- ── Stats Cards ─────────────────────────────────────────────────── -->
-  <div class="stats-grid">
+  <!-- Navigation Tabs -->
+  <div class="tabs-nav animate">
+    <button class="btn active" id="btnShowStats">📊 Stats & Activity</button>
+    <button class="btn" id="btnShowLeaderboard">🏆 Global Leaderboard</button>
+  </div>
+
+  <div id="statsContainer">
+    <!-- ── Stats Cards ─────────────────────────────────────────────────── -->
+    <div class="stats-grid">
     <div class="stat-card animate delay-1" style="--card-accent: var(--green)">
       <span class="icon">✅</span>
       <div class="num" id="cardTotal">—</div>
@@ -413,6 +434,18 @@
       </div>
     </div>
     <div id="historyBody"></div>
+  </div>
+  </div><!-- /statsContainer -->
+
+  <!-- ── Leaderboard Section ─────────────────────────────────────────── -->
+  <div id="leaderboardContainer" class="section-hidden" style="display:none;">
+    <div class="history-card animate">
+      <div class="history-header">
+        <div class="section-title" style="margin:0">🏆 Global Leaderboard Rankings</div>
+        <div style="font-size:11px;color:var(--text-muted)">Real-time rankings based on synced solutions</div>
+      </div>
+      <div id="leaderboardBody"></div>
+    </div>
   </div>
 
 </div><!-- /page -->

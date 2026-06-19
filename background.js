@@ -94,32 +94,29 @@ async function unmarkProcessing(submissionId) {
 }
 
 // ─── WebRequest Listener ───────────────────────────────────────────────────
-// Watches ALL completed leetcode.com requests.
-// Matches submission check URLs and triggers the sync pipeline.
+// Watches ALL completed requests to match LeetCode and HackerRank submissions.
 chrome.webRequest.onCompleted.addListener(
   (details) => {
-    // Broad log for debugging URL pattern changes
-    if (
-      details.url.includes("submit") ||
-      details.url.includes("check") ||
-      details.url.includes("submissions")
-    ) {
-      logDebug(`Request seen: ${details.url}`);
-    }
-
-    // Match both v1 and v2 check endpoints
-    const match = details.url.match(
-      /\/submissions\/detail\/(\d+)\/(?:v2\/)?check\/?/
-    );
-    if (match) {
-      const submissionId = match[1];
-      logDebug(
-        `Submission check matched! ID: ${submissionId}, TabId: ${details.tabId}`
-      );
-      handleSubmissionSeen(submissionId, details.tabId);
+    if (details.url.includes("leetcode.com")) {
+      const match = details.url.match(/\/submissions\/detail\/(\d+)\/(?:v2\/)?check\/?/);
+      if (match) {
+        const submissionId = match[1];
+        logDebug(`LeetCode Submission check matched! ID: ${submissionId}, TabId: ${details.tabId}`);
+        handleSubmissionSeen(submissionId, details.tabId);
+      }
+    } else if (details.url.includes("hackerrank.com/rest/contests/master/challenges/")) {
+      // Intercept HackerRank submissions checks:
+      // Pattern: https://www.hackerrank.com/rest/contests/master/challenges/<slug>/submissions/<subId>
+      const match = details.url.match(/\/challenges\/([^\/]+)\/submissions\/(\d+)/);
+      if (match) {
+        const slug = match[1];
+        const submissionId = match[2];
+        logDebug(`HackerRank Submission matched! Slug: ${slug}, ID: ${submissionId}, TabId: ${details.tabId}`);
+        handleHackerRankSubmission(slug, submissionId, details.tabId);
+      }
     }
   },
-  { urls: ["https://leetcode.com/*"] }
+  { urls: ["https://leetcode.com/*", "https://www.hackerrank.com/*"] }
 );
 
 // ─── Main Sync Pipeline ────────────────────────────────────────────────────
@@ -174,18 +171,33 @@ async function handleSubmissionSeen(submissionId, tabId) {
       // ⑤ Update persistent sync state
       const updatedIds = [...syncedIds, submissionId].slice(-500);
       const { syncedCount = 0 } = await chrome.storage.local.get(["syncedCount"]);
+      const newCount = syncedCount + 1;
       await chrome.storage.local.set({
         syncedIds: updatedIds,
-        syncedCount: syncedCount + 1,
+        syncedCount: newCount,
         lastSync: Date.now()
       });
 
+      // ⑤.1 Auto-generate README.md
+      const ext = LANG_EXT[details.lang?.name?.toLowerCase()] || "txt";
+      await pushReadmeToGithub(
+        details,
+        details.question?.titleSlug,
+        details.question?.difficulty || "Unknown",
+        details.question?.questionId,
+        ext,
+        "LeetCode"
+      );
+
       // ⑥ Update streak
-      await updateStreak();
+      const newStreak = await updateStreak();
 
       // ⑦ Update extension badge
-      chrome.action.setBadgeText({ text: String(syncedCount + 1) });
+      chrome.action.setBadgeText({ text: String(newCount) });
       chrome.action.setBadgeBackgroundColor({ color: "#3fb950" });
+
+      // Sync to Leaderboard
+      await syncToLeaderboard(newCount, newStreak);
 
       // ⑧ Store rich history entry for the dashboard
       await appendToSyncHistory({
@@ -283,6 +295,7 @@ async function fetchSubmissionDetails(submissionId) {
           titleSlug
           title
           difficulty
+          content
         }
       }
     }
@@ -625,8 +638,10 @@ async function updateStreak() {
       lastStreakDate: today
     });
     logDebug(`Streak updated: ${newStreak} day(s).`);
+    return newStreak;
   } catch (err) {
     logDebug(`Streak update error: ${err.message}`, LOG_LEVEL.WARN);
+    return 0;
   }
 }
 
@@ -674,16 +689,20 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 // the polling continues and the token is saved when ready.
 let oauthPollTimer = null;
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "START_OAUTH_POLL") {
     startOAuthPollInBackground(msg);
     sendResponse({ ok: true });
-  }
-  if (msg.type === "STOP_OAUTH_POLL") {
+  } else if (msg.type === "STOP_OAUTH_POLL") {
     stopOAuthPoll();
     sendResponse({ ok: true });
-  }
-  if (msg.type === "GET_STATUS") {
+  } else if (msg.type === "GET_STATUS") {
+    sendResponse({ ok: true });
+  } else if (msg.type === "CODEFORCES_SUBMITTED") {
+    startCodeforcesPolling(sender.tab?.id);
+    sendResponse({ ok: true });
+  } else if (msg.type === "GFG_ACCEPTED") {
+    handleGfgAccepted(msg.data, sender.tab?.id);
     sendResponse({ ok: true });
   }
   return true; // Keep message channel open for async
@@ -787,5 +806,557 @@ chrome.runtime.onStartup.addListener(async () => {
     }
   } catch (_) {}
 });
+
+// ─── HTML to Markdown Converter ──────────────────────────────────────────
+function htmlToMarkdown(html) {
+  if (!html) return "";
+  let md = html;
+
+  // Replace block elements and line breaks
+  md = md.replace(/<pre>([\s\S]*?)<\/pre>/gi, (match, code) => {
+    const cleanCode = code.replace(/<[^>]+>/g, "");
+    return `\n\`\`\`\n${cleanCode}\n\`\`\`\n`;
+  });
+  
+  md = md.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, "\n# $1\n");
+  md = md.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, "\n## $1\n");
+  md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, "\n### $1\n");
+  md = md.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, "\n#### $1\n");
+  md = md.replace(/<h5[^>]*>([\s\S]*?)<\/h5>/gi, "\n##### $1\n");
+  md = md.replace(/<h6[^>]*>([\s\S]*?)<\/h6>/gi, "\n###### $1\n");
+
+  md = md.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, "\n\n$1\n\n");
+  md = md.replace(/<br\s*\/?>/gi, "\n");
+  
+  // Lists
+  md = md.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, "\n$1\n");
+  md = md.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, "\n$1\n");
+  md = md.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "\n- $1");
+
+  // Inline formatting
+  md = md.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**");
+  md = md.replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**");
+  md = md.replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, "*$1*");
+  md = md.replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, "*$1*");
+  md = md.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`");
+
+  // Strip remaining tags
+  md = md.replace(/<[^>]+>/g, "");
+
+  // Decode common HTML entities
+  const entities = {
+    "&nbsp;": " ",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&amp;": "&",
+    "&quot;": '"',
+    "&apos;": "'",
+    "&#39;": "'",
+    "&deg;": "°",
+  };
+  for (const [entity, value] of Object.entries(entities)) {
+    md = md.replace(new RegExp(entity, "g"), value);
+  }
+
+  // Clean up whitespace/newlines
+  md = md.replace(/\n{3,}/g, "\n\n");
+  return md.trim();
+}
+
+// ─── README.md Sync ────────────────────────────────────────────────────────
+async function pushReadmeToGithub(details, slug, difficulty, questionId, ext, platform = "LeetCode") {
+  const cfg = await chrome.storage.local.get([
+    "ghToken", "ghOwner", "ghRepo", "ghBranch"
+  ]);
+  if (!cfg.ghToken || !cfg.ghOwner || !cfg.ghRepo) return;
+
+  const branch = cfg.ghBranch || "main";
+  
+  let filePath = "";
+  let title = "";
+  let problemUrl = "";
+  let descriptionHtml = "";
+  let langVerbose = "";
+
+  if (platform === "LeetCode") {
+    const paddedQId = String(questionId || "0").padStart(4, "0");
+    filePath = `${difficulty}/${paddedQId}-${slug}/README.md`;
+    title = details.question?.title || slug;
+    problemUrl = `https://leetcode.com/problems/${slug}/`;
+    descriptionHtml = details.question?.content || "";
+    langVerbose = details.lang?.verboseName || "";
+  } else if (platform === "Codeforces") {
+    filePath = `Codeforces/${difficulty}/${slug}/README.md`;
+    title = details.title || slug;
+    problemUrl = details.url || "";
+    descriptionHtml = details.descriptionHtml || "";
+    langVerbose = details.lang || "";
+  } else if (platform === "HackerRank") {
+    filePath = `HackerRank/${difficulty}/${slug}/README.md`;
+    title = details.title || slug;
+    problemUrl = details.url || "";
+    descriptionHtml = details.descriptionHtml || "";
+    langVerbose = details.lang || "";
+  } else if (platform === "GeeksforGeeks") {
+    filePath = `GeeksforGeeks/${difficulty}/${slug}/README.md`;
+    title = details.title || slug;
+    problemUrl = details.url || "";
+    descriptionHtml = details.descriptionHtml || "";
+    langVerbose = details.lang || "";
+  }
+
+  const apiBase = `https://api.github.com/repos/${cfg.ghOwner}/${cfg.ghRepo}`;
+  const readmeApiUrl = `${apiBase}/contents/${encodeURI(filePath)}`;
+  const headers = {
+    Authorization: `Bearer ${cfg.ghToken}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+
+  let existingSha;
+  try {
+    const getRes = await fetch(`${readmeApiUrl}?ref=${encodeURIComponent(branch)}`, { headers });
+    if (getRes.status === 200) {
+      const getJson = await getRes.json();
+      existingSha = getJson.sha;
+    }
+  } catch (_) {}
+
+  const markdownDescription = htmlToMarkdown(descriptionHtml);
+  const runtimeDisplay = details.runtimeDisplay || details.runtime || "";
+  const memoryDisplay = details.memoryDisplay || details.memory || "";
+  
+  const readmeContent = `# [${platform}] ${title}
+
+**Difficulty:** ${difficulty}  
+**Language:** ${langVerbose}  
+${runtimeDisplay ? `**Runtime:** ${runtimeDisplay}  \n` : ""}${memoryDisplay ? `**Memory:** ${memoryDisplay}  \n` : ""}**Link:** [Problem Link](${problemUrl})
+
+## Problem Description
+
+${markdownDescription || "No description available."}
+
+---
+*README auto-generated by [Code2Git](https://github.com/krishnasahoo11156/Code2Git)*
+`;
+
+  const commitMessage = `📝 Add README: [${platform}] ${title}`;
+  const base64Content = codeToBase64(readmeContent);
+
+  try {
+    await fetch(readmeApiUrl, {
+      method: "PUT",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: commitMessage,
+        content: base64Content,
+        branch,
+        ...(existingSha ? { sha: existingSha } : {})
+      })
+    });
+    logDebug(`README.md successfully synced for ${title} (${platform}).`);
+  } catch (err) {
+    logDebug(`Failed to push README.md: ${err.message}`, LOG_LEVEL.WARN);
+  }
+}
+
+// ─── Multi-Platform Sync Core ────────────────────────────────────────────────
+async function pushMultiplatformToGithub(code, filePath, commitMessage, branch) {
+  const cfg = await chrome.storage.local.get(["ghToken", "ghOwner", "ghRepo"]);
+  const apiBase = `https://api.github.com/repos/${cfg.ghOwner}/${cfg.ghRepo}`;
+  const fileApiUrl = `${apiBase}/contents/${encodeURI(filePath)}`;
+  const headers = {
+    Authorization: `Bearer ${cfg.ghToken}`,
+    Accept: "application/vnd.github+json"
+  };
+
+  await ensureBranchExists(headers, apiBase, branch);
+
+  let existingSha;
+  try {
+    const getRes = await fetch(`${fileApiUrl}?ref=${encodeURIComponent(branch)}`, { headers });
+    if (getRes.status === 200) {
+      const getJson = await getRes.json();
+      existingSha = getJson.sha;
+    }
+  } catch (_) {}
+
+  const content = codeToBase64(code);
+
+  const putRes = await fetch(fileApiUrl, {
+    method: "PUT",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: commitMessage,
+      content,
+      branch,
+      ...(existingSha ? { sha: existingSha } : {})
+    })
+  });
+
+  return putRes.ok;
+}
+
+// ─── HackerRank Handler ──────────────────────────────────────────────────────
+async function handleHackerRankSubmission(slug, submissionId, tabId) {
+  try {
+    if (await isProcessing(submissionId)) return;
+    const { syncedIds = [] } = await chrome.storage.local.get(["syncedIds"]);
+    if (syncedIds.includes(submissionId)) return;
+
+    await markProcessing(submissionId);
+
+    // Fetch submission detail JSON from HackerRank REST
+    const subRes = await fetch(`https://www.hackerrank.com/rest/contests/master/challenges/${slug}/submissions/${submissionId}`);
+    if (!subRes.ok) throw new Error("Could not fetch HackerRank submission details.");
+    const subJson = await subRes.json();
+    const sub = subJson.model;
+
+    if (sub.status !== "Accepted" && sub.score !== 1.0) {
+      logDebug(`HackerRank submission ${submissionId} not accepted. Skip.`);
+      await unmarkProcessing(submissionId);
+      return;
+    }
+
+    // Fetch challenge details
+    const challRes = await fetch(`https://www.hackerrank.com/rest/contests/master/challenges/${slug}`);
+    if (!challRes.ok) throw new Error("Could not fetch HackerRank challenge details.");
+    const challJson = await challRes.json();
+    const chall = challJson.model;
+
+    const title = chall.name || slug;
+    const difficulty = chall.difficulty_name || "Medium";
+    const code = sub.code;
+    const language = sub.language;
+    const ext = LANG_EXT[language.toLowerCase()] || "txt";
+    const filePath = `HackerRank/${difficulty}/${slug}/Solution.${ext}`;
+    const branch = (await chrome.storage.local.get(["ghBranch"])).ghBranch || "main";
+
+    const commitMessage = `✅ [HackerRank] ${title} | ${language}`;
+
+    logDebug(`Pushing HackerRank solution for ${title} to GitHub...`);
+    const ok = await pushMultiplatformToGithub(code, filePath, commitMessage, branch);
+
+    if (ok) {
+      const updatedIds = [...syncedIds, submissionId].slice(-500);
+      const { syncedCount = 0 } = await chrome.storage.local.get(["syncedCount"]);
+      const newCount = syncedCount + 1;
+      await chrome.storage.local.set({
+        syncedIds: updatedIds,
+        syncedCount: newCount,
+        lastSync: Date.now()
+      });
+
+      const newStreak = await updateStreak();
+      chrome.action.setBadgeText({ text: String(newCount) });
+      chrome.action.setBadgeBackgroundColor({ color: "#3fb950" });
+
+      await syncToLeaderboard(newCount, newStreak);
+
+      await appendToSyncHistory({
+        submissionId,
+        questionId: String(sub.challenge_id || "0"),
+        title,
+        titleSlug: slug,
+        difficulty,
+        lang: language,
+        runtime: "100% Score",
+        memory: "N/A",
+        githubPath: filePath,
+        timestamp: Date.now()
+      });
+
+      // Secondary README push
+      const details = {
+        title,
+        url: `https://www.hackerrank.com/challenges/${slug}/problem`,
+        descriptionHtml: chall.body_html || "",
+        lang: language,
+        runtime: "100% Score",
+        memory: "N/A"
+      };
+      await pushReadmeToGithub(details, slug, difficulty, null, ext, "HackerRank");
+
+      chrome.notifications.create(`sync-hr-${submissionId}`, {
+        type: "basic",
+        iconUrl: "icons/icon128.png",
+        title: "✅ HackerRank → GitHub Synced!",
+        message: `${title} pushed successfully.`,
+      });
+
+      await notifyTab(tabId, { type: "SYNC_RESULT", ok: true, title, difficulty, lang: language, message: "Pushed to GitHub!" });
+    } else {
+      throw new Error("GitHub push failed.");
+    }
+  } catch (err) {
+    logDebug(`HackerRank Sync error: ${err.message}`, LOG_LEVEL.ERROR);
+    await notifyTab(tabId, { type: "SYNC_RESULT", ok: false, message: err.message });
+  } finally {
+    await unmarkProcessing(submissionId);
+  }
+}
+
+// ─── Codeforces Poller ───────────────────────────────────────────────────────
+async function startCodeforcesPolling(tabId) {
+  const cfg = await chrome.storage.local.get(["cfHandle"]);
+  if (!cfg.cfHandle) {
+    logDebug("Codeforces handle not configured in settings. Skipping polling.", LOG_LEVEL.WARN);
+    return;
+  }
+
+  logDebug(`CF Triggered: polling for handle '${cfg.cfHandle}'...`);
+  
+  let attempts = 0;
+  const maxAttempts = 12; // 1 minute total (5s * 12)
+  
+  const poll = async () => {
+    try {
+      const res = await fetch(`https://codeforces.com/api/user.status?handle=${cfg.cfHandle}&from=1&count=5`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.status !== "OK" || !data.result?.length) return;
+
+      const latest = data.result[0];
+      const submissionId = String(latest.id);
+
+      // Check if it's Accepted (OK)
+      if (latest.verdict !== "OK") {
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 5000);
+        } else {
+          logDebug("Codeforces polling finished: no new accepted submissions.");
+        }
+        return;
+      }
+
+      const { syncedIds = [] } = await chrome.storage.local.get(["syncedIds"]);
+      if (syncedIds.includes(submissionId)) {
+        return;
+      }
+
+      logDebug(`Found new Codeforces submission: ${submissionId}. Syncing...`);
+      await markProcessing(submissionId);
+
+      // Fetch code HTML and parse
+      const subUrl = `https://codeforces.com/contest/${latest.contestId}/submission/${submissionId}`;
+      const subPageRes = await fetch(subUrl);
+      if (!subPageRes.ok) throw new Error("Could not fetch Codeforces submission page HTML.");
+      const subHtml = await subPageRes.text();
+      
+      const codeMatch = subHtml.match(/<pre[^>]*id="program-source-text"[^>]*>([\s\S]*?)<\/pre>/);
+      if (!codeMatch) throw new Error("Failed to parse Codeforces code from page HTML.");
+      
+      let code = codeMatch[1]
+        .replace(/&quot;/g, '"')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&#39;/g, "'");
+
+      if (code.includes("<![CDATA[")) {
+        code = code.replace("<![CDATA[", "").replace("]]>", "");
+      }
+
+      const title = latest.problem.name;
+      const rating = latest.problem.rating || 0;
+      const difficulty = rating < 1200 ? "Easy" : rating < 1900 ? "Medium" : "Hard";
+      const slug = `${latest.problem.index}`;
+      const lang = latest.programmingLanguage;
+      const ext = LANG_EXT[lang.toLowerCase().replace(/[^a-z0-9]/g, "")] || "cpp";
+      const filePath = `Codeforces/${difficulty}/${latest.contestId}${slug}-${title.toLowerCase().replace(/[^a-z0-9]/g, "-")}/Solution.${ext}`;
+      const branch = (await chrome.storage.local.get(["ghBranch"])).ghBranch || "main";
+      
+      const commitMessage = `✅ [Codeforces] ${title} | ${lang} | ${latest.timeConsumedMillis}ms | ${Math.round(latest.memoryConsumedBytes/1024)}KB`;
+
+      const ok = await pushMultiplatformToGithub(code, filePath, commitMessage, branch);
+
+      if (ok) {
+        const updatedIds = [...syncedIds, submissionId].slice(-500);
+        const { syncedCount = 0 } = await chrome.storage.local.get(["syncedCount"]);
+        const newCount = syncedCount + 1;
+        await chrome.storage.local.set({
+          syncedIds: updatedIds,
+          syncedCount: newCount,
+          lastSync: Date.now()
+        });
+
+        const newStreak = await updateStreak();
+        chrome.action.setBadgeText({ text: String(newCount) });
+        chrome.action.setBadgeBackgroundColor({ color: "#3fb950" });
+
+        await syncToLeaderboard(newCount, newStreak);
+
+        await appendToSyncHistory({
+          submissionId,
+          questionId: `${latest.contestId}${slug}`,
+          title,
+          titleSlug: slug,
+          difficulty,
+          lang,
+          runtime: `${latest.timeConsumedMillis}ms`,
+          memory: `${Math.round(latest.memoryConsumedBytes/1024)}KB`,
+          githubPath: filePath,
+          timestamp: Date.now()
+        });
+
+        // Fetch description
+        let problemDescHtml = "";
+        try {
+          const probUrl = `https://codeforces.com/contest/${latest.contestId}/problem/${slug}`;
+          const probRes = await fetch(probUrl);
+          if (probRes.ok) {
+            const probHtml = await probRes.text();
+            const descMatch = probHtml.match(/<div class="problem-statement">([\s\S]*?)<\/div>\s*<div class="input-specification">/);
+            if (descMatch) {
+              problemDescHtml = descMatch[1];
+            }
+          }
+        } catch (_) {}
+
+        const details = {
+          title,
+          url: `https://codeforces.com/contest/${latest.contestId}/problem/${slug}`,
+          descriptionHtml: problemDescHtml,
+          lang,
+          runtime: `${latest.timeConsumedMillis}ms`,
+          memory: `${Math.round(latest.memoryConsumedBytes/1024)}KB`
+        };
+        await pushReadmeToGithub(details, `${latest.contestId}${slug}`, difficulty, null, ext, "Codeforces");
+
+        chrome.notifications.create(`sync-cf-${submissionId}`, {
+          type: "basic",
+          iconUrl: "icons/icon128.png",
+          title: "✅ Codeforces → GitHub Synced!",
+          message: `${title} pushed successfully.`,
+        });
+
+        await notifyTab(tabId, { type: "SYNC_RESULT", ok: true, title, difficulty, lang, message: "Pushed to GitHub!" });
+      }
+    } catch (e) {
+      logDebug(`Codeforces polling error: ${e.message}`, LOG_LEVEL.WARN);
+    } finally {
+      await unmarkProcessing(submissionId);
+    }
+  };
+
+  setTimeout(poll, 3000);
+}
+
+// ─── GeeksforGeeks Handler ──────────────────────────────────────────────────
+async function handleGfgAccepted(data, tabId) {
+  const submissionId = `gfg-${Date.now()}`;
+  try {
+    if (await isProcessing(submissionId)) return;
+    const { syncedIds = [] } = await chrome.storage.local.get(["syncedIds"]);
+
+    await markProcessing(submissionId);
+
+    const { code, title, difficulty, lang, slug, url, descriptionHtml = "" } = data;
+
+    const ext = LANG_EXT[lang.toLowerCase().replace(/[^a-z0-9]/g, "")] || "cpp";
+    const filePath = `GeeksforGeeks/${difficulty}/${slug}/Solution.${ext}`;
+    const branch = (await chrome.storage.local.get(["ghBranch"])).ghBranch || "main";
+
+    const commitMessage = `✅ [GeeksforGeeks] ${title} | ${lang}`;
+
+    logDebug(`Pushing GeeksforGeeks solution for ${title} to GitHub...`);
+    const ok = await pushMultiplatformToGithub(code, filePath, commitMessage, branch);
+
+    if (ok) {
+      const updatedIds = [...syncedIds, submissionId].slice(-500);
+      const { syncedCount = 0 } = await chrome.storage.local.get(["syncedCount"]);
+      const newCount = syncedCount + 1;
+      await chrome.storage.local.set({
+        syncedIds: updatedIds,
+        syncedCount: newCount,
+        lastSync: Date.now()
+      });
+
+      const newStreak = await updateStreak();
+      chrome.action.setBadgeText({ text: String(newCount) });
+      chrome.action.setBadgeBackgroundColor({ color: "#3fb950" });
+
+      await syncToLeaderboard(newCount, newStreak);
+
+      await appendToSyncHistory({
+        submissionId,
+        questionId: slug,
+        title,
+        titleSlug: slug,
+        difficulty,
+        lang,
+        runtime: "Accepted",
+        memory: "N/A",
+        githubPath: filePath,
+        timestamp: Date.now()
+      });
+
+      const details = {
+        title,
+        url,
+        descriptionHtml,
+        lang,
+        runtime: "Accepted",
+        memory: "N/A"
+      };
+      await pushReadmeToGithub(details, slug, difficulty, null, ext, "GeeksforGeeks");
+
+      chrome.notifications.create(`sync-gfg-${submissionId}`, {
+        type: "basic",
+        iconUrl: "icons/icon128.png",
+        title: "✅ GeeksforGeeks → GitHub Synced!",
+        message: `${title} pushed successfully.`,
+      });
+
+      await notifyTab(tabId, { type: "SYNC_RESULT", ok: true, title, difficulty, lang, message: "Pushed to GitHub!" });
+    } else {
+      throw new Error("GitHub push failed.");
+    }
+  } catch (err) {
+    logDebug(`GeeksforGeeks sync error: ${err.message}`, LOG_LEVEL.ERROR);
+    await notifyTab(tabId, { type: "SYNC_RESULT", ok: false, message: err.message });
+  } finally {
+    await unmarkProcessing(submissionId);
+  }
+}
+
+// ─── Leaderboard Database REST client ───────────────────────────────────────
+async function syncToLeaderboard(syncedCount, streakCount) {
+  try {
+    const cfg = await chrome.storage.local.get([
+      "ghOwner", "displayName", "leaderboardUrl", "optInLeaderboard"
+    ]);
+    if (cfg.optInLeaderboard === false) {
+      logDebug("Leaderboard opt-in is disabled. Skipping leaderboard sync.");
+      return;
+    }
+
+    const username = cfg.ghOwner;
+    if (!username) return;
+
+    // Use default public Firebase DB to compile a global leaderboard
+    const dbUrl = cfg.leaderboardUrl || "https://code2git-leaderboard-default-rtdb.firebaseio.com";
+    const displayName = cfg.displayName || username;
+
+    const userPayload = {
+      username,
+      displayName,
+      syncedCount: Number(syncedCount || 0),
+      streakCount: Number(streakCount || 0),
+      lastSync: Date.now(),
+      avatarUrl: `https://github.com/${username}.png`
+    };
+
+    await fetch(`${dbUrl}/leaderboard/${username}.json`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userPayload)
+    });
+    logDebug(`Sync to leaderboard successful for user ${username}.`);
+  } catch (err) {
+    logDebug(`Leaderboard sync error: ${err.message}`, LOG_LEVEL.WARN);
+  }
+}
 
 logDebug("Background script fully initialized. Listening for submissions.");

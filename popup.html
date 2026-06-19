@@ -594,6 +594,30 @@
         <div class="field-hint">Leave blank to use <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;font-size:10px">main</code></div>
       </div>
 
+      <!-- Multi-Platform Handle Config -->
+      <div class="field">
+        <label class="field-label" for="cfHandle">Codeforces Handle (Optional)</label>
+        <input id="cfHandle" type="text" class="plain" placeholder="tourist" autocomplete="off" spellcheck="false" />
+        <div class="field-hint">Used to fetch Codeforces submission history</div>
+      </div>
+
+      <!-- Leaderboard Config -->
+      <hr class="divider" />
+      <div class="section-label">Leaderboard Settings</div>
+      <div class="field">
+        <label class="field-label" for="displayName">Leaderboard Nickname</label>
+        <input id="displayName" type="text" class="plain" placeholder="your-nickname" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="field">
+        <label class="field-label" for="leaderboardUrl">Custom Leaderboard URL (Optional)</label>
+        <input id="leaderboardUrl" type="text" class="plain" placeholder="https://..." autocomplete="off" spellcheck="false" />
+        <div class="field-hint">Link to a custom Firebase database for your coding club</div>
+      </div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;margin-top:8px;margin-bottom:12px;">
+        <input id="optInLeaderboard" type="checkbox" checked style="width:auto;cursor:pointer;" />
+        <label for="optInLeaderboard" style="font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;">Opt-in to Public Leaderboard</label>
+      </div>
+
       <button class="btn btn-primary" id="saveBtn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Save Settings

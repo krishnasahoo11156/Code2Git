@@ -16,6 +16,34 @@ const LANG_COLORS = [
   "#79c0ff","#56d364"
 ];
 
+// ─── Language Normalization Helper ──────────────────────────────────────────
+function normalizeLanguage(lang) {
+  if (!lang) return "Unknown";
+  const name = lang.trim();
+  const lower = name.toLowerCase();
+
+  if (lower.startsWith("java")) return "Java";
+  if (lower.includes("c++") || lower.includes("cpp") || lower.includes("g++")) return "C++";
+  if (lower.startsWith("python") || lower.includes("pypy")) return "Python";
+  if (lower === "c" || lower.startsWith("gnu c") || lower.includes("gcc")) {
+    if (lower.includes("c++") || lower.includes("cpp")) return "C++";
+    return "C";
+  }
+  if (lower.includes("c#") || lower.includes("csharp")) return "C#";
+  if (lower.includes("javascript") || lower === "js" || lower.includes("node")) return "JavaScript";
+  if (lower.includes("typescript") || lower === "ts") return "TypeScript";
+  if (lower.includes("golang") || lower === "go") return "Go";
+  if (lower.includes("rust")) return "Rust";
+  if (lower.includes("kotlin")) return "Kotlin";
+  if (lower.includes("swift")) return "Swift";
+  if (lower.includes("ruby")) return "Ruby";
+  if (lower.includes("scala")) return "Scala";
+  if (lower.includes("php")) return "PHP";
+
+  // Capitalize first letter as fallback
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 // ─── Entry Point ──────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   const data = await chrome.storage.local.get([
@@ -148,7 +176,7 @@ function relativeTime(ts) {
 function renderStatCards(data, history) {
   const total  = data.syncedCount || 0;
   const streak = data.streakCount || 0;
-  const langs  = new Set(history.map(e => e.lang).filter(Boolean)).size;
+  const langs  = new Set(history.map(e => normalizeLanguage(e.lang)).filter(Boolean)).size;
 
   document.getElementById("cardTotal").textContent   = total;
   document.getElementById("cardStreak").textContent  = streak;
@@ -425,7 +453,10 @@ function renderLangBarChart(history) {
   // Count by language
   const langCount = {};
   history.forEach(e => {
-    if (e.lang) langCount[e.lang] = (langCount[e.lang] || 0) + 1;
+    if (e.lang) {
+      const norm = normalizeLanguage(e.lang);
+      langCount[norm] = (langCount[norm] || 0) + 1;
+    }
   });
 
   const sorted = Object.entries(langCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
@@ -517,7 +548,7 @@ function renderHistoryTable(history, ghOwner, ghRepo, ghBranch, diffFilter = "al
         <td class="td-dim">#${qId}</td>
         <td class="td-title">${titleHtml}</td>
         <td><span class="badge ${diffCls}">${diff}</span></td>
-        <td><span class="badge badge-lang">${entry.lang || "—"}</span></td>
+        <td><span class="badge badge-lang">${normalizeLanguage(entry.lang) || "—"}</span></td>
         <td class="td-muted">${entry.runtime || "—"}</td>
         <td class="td-muted">${entry.memory  || "—"}</td>
         <td class="td-dim" title="${dateStr}">${timeStr}</td>
@@ -940,7 +971,7 @@ async function renderPlatformsSection(filterPlatform = "all") {
                 <div class="timeline-item-title">${qIdHtml}${titleHtml}</div>
                 <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
                   <span class="badge ${diffCls}" style="font-size:9px;padding:1px 5px;">${diff}</span>
-                  <span class="badge badge-lang" style="font-size:9px;padding:1px 5px;">${entry.lang || "—"}</span>
+                  <span class="badge badge-lang" style="font-size:9px;padding:1px 5px;">${normalizeLanguage(entry.lang) || "—"}</span>
                   <span class="timeline-item-time">${timeStr}</span>
                 </div>
               </div>

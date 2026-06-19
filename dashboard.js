@@ -121,13 +121,19 @@ function renderStatCards(data, history) {
 
 function computeLongestStreak(history) {
   if (!history.length) return 0;
-  const days = new Set(
-    history.map(e => new Date(e.timestamp).toDateString())
-  );
+  const days = new Set();
+  history.forEach(e => {
+    const ts = e.timestamp || e.date || e.time;
+    if (ts) {
+      const dStr = new Date(ts).toDateString();
+      if (dStr !== "Invalid Date") days.add(dStr);
+    }
+  });
   const sorted = [...days].map(d => new Date(d)).sort((a, b) => a - b);
   let max = 1, cur = 1;
   for (let i = 1; i < sorted.length; i++) {
-    const diff = (sorted[i] - sorted[i-1]) / 86400000;
+    // Use Math.round to protect against DST 23-hour or 25-hour day variations
+    const diff = Math.round((sorted[i] - sorted[i-1]) / 86400000);
     cur = diff === 1 ? cur + 1 : 1;
     if (cur > max) max = cur;
   }
@@ -146,17 +152,20 @@ function renderHeatmap(history) {
   // Build day → count map
   const dayMap = {};
   history.forEach(e => {
-    const key = new Date(e.timestamp).toDateString();
-    dayMap[key] = (dayMap[key] || 0) + 1;
+    const ts = e.timestamp || e.date || e.time;
+    if (!ts) return;
+    const key = new Date(ts).toDateString();
+    if (key !== "Invalid Date") {
+      dayMap[key] = (dayMap[key] || 0) + 1;
+    }
   });
 
-  // Start from WEEKS weeks ago, align to Sunday
   const now     = new Date();
   const today   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startDay = new Date(today);
-  startDay.setDate(today.getDate() - (WEEKS * 7 - 1));
-  // Align to Sunday
-  startDay.setDate(startDay.getDate() - startDay.getDay());
+
+  // Align to Saturday of the current week at noon to avoid DST boundary crossings
+  const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0, 0);
+  endDate.setDate(endDate.getDate() + (6 - today.getDay()));
 
   const maxCount = Math.max(1, ...Object.values(dayMap));
 
@@ -169,22 +178,30 @@ function renderHeatmap(history) {
     col.className = "heatmap-col";
 
     for (let d = 0; d < 7; d++) {
-      const date = new Date(startDay);
-      date.setDate(startDay.getDate() + w * 7 + d);
+      // Calculate date for this cell: go back from endDate
+      const date = new Date(endDate);
+      date.setDate(endDate.getDate() - ((WEEKS - 1 - w) * 7 + (6 - d)));
 
-      const isFuture = date > today;
-      const key      = date.toDateString();
+      // Compare dates at midnight to avoid DST/time-of-day offsets
+      const dateMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const isFuture = dateMidnight > todayMidnight;
+
+      const key      = dateMidnight.toDateString();
       const count    = dayMap[key] || 0;
 
       const cell = document.createElement("div");
       cell.className = "heatmap-cell";
-      if (!isFuture && count > 0) {
+      
+      // If a cell has activity (even if marked future due to clock skews), show it as active/green.
+      if (count > 0) {
         const ratio = count / maxCount;
         cell.className += ratio > 0.75 ? " lvl-4" :
                           ratio > 0.5  ? " lvl-3" :
                           ratio > 0.25 ? " lvl-2" : " lvl-1";
+      } else if (isFuture) {
+        cell.style.opacity = "0.3";
       }
-      if (isFuture) cell.style.opacity = "0.3";
 
       // Tooltip on hover
       cell.addEventListener("mouseenter", (e) => {

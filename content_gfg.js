@@ -85,41 +85,8 @@ if (!window.__gfgSyncContentLoaded) {
   });
 
   function extractCodeFromPage() {
-    logToBackground("Injecting editor content extraction script into page context...");
-    // Inject script to access page-level Monaco or CodeMirror instances
-    const script = document.createElement("script");
-    script.textContent = `
-      (function() {
-        try {
-          let code = "";
-          if (window.monaco && window.monaco.editor) {
-            const models = window.monaco.editor.getModels();
-            if (models.length > 0) code = models[0].getValue();
-          } else if (window.ace) {
-            const aceEl = document.querySelector('.ace_editor');
-            if (aceEl && aceEl.env && aceEl.env.editor) {
-              code = aceEl.env.editor.getValue();
-            }
-          }
-          if (!code) {
-            const cm = document.querySelector('.CodeMirror');
-            if (cm && cm.CodeMirror) {
-              code = cm.CodeMirror.getValue();
-            }
-          }
-          if (!code) {
-            // Fallback to text lines in GFG editor DOM
-            const lines = Array.from(document.querySelectorAll(".view-line"));
-            if (lines.length > 0) {
-              code = lines.map(l => l.textContent).join("\\n");
-            }
-          }
-          document.dispatchEvent(new CustomEvent('GFG_CODE_EXTRACTED', { detail: code }));
-        } catch (e) {}
-      })();
-    `;
-    document.documentElement.appendChild(script);
-    script.remove();
+    logToBackground("Requesting editor content from main world context...");
+    document.dispatchEvent(new CustomEvent("GFG_REQUEST_CODE"));
   }
 
   function handleGFGSolved(code) {

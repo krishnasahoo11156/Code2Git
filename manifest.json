@@ -44,6 +44,12 @@
       "matches": ["https://*.geeksforgeeks.org/*"],
       "js": ["content_gfg.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://*.geeksforgeeks.org/*"],
+      "js": ["content_gfg_main.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
     }
   ],
   "action": {

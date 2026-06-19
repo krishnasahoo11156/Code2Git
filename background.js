@@ -619,8 +619,12 @@ async function updateStreak() {
     const { streakCount = 0, lastStreakDate } = await chrome.storage.local.get([
       "streakCount", "lastStreakDate"
     ]);
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const todayObj = new Date();
+    const today = todayObj.toDateString();
+    
+    const yesterdayObj = new Date(todayObj);
+    yesterdayObj.setDate(todayObj.getDate() - 1);
+    const yesterday = yesterdayObj.toDateString();
 
     let newStreak = streakCount;
     if (lastStreakDate === today) {

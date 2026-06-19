@@ -69,6 +69,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderLangBarChart(history);
   renderHistoryTable(history, ghOwner, ghRepo, ghBranch);
   setupDiffFilter(history, ghOwner, ghRepo, ghBranch);
+  renderShareCard(data, history);
+  setupShareButton(data, history);
 
   // Tabs Navigation
   const btnShowStats = document.getElementById("btnShowStats");
@@ -638,6 +640,8 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     renderLangBarChart(history);
     const activeFilter = document.querySelector(".filter-btn.active")?.dataset.diff || "all";
     renderHistoryTable(history, data.ghOwner || "", data.ghRepo || "", data.ghBranch || "main", activeFilter);
+    renderShareCard(data, history);
+    setupShareButton(data, history);
     
     // Also refresh leaderboard if it is currently visible
     const leaderboardContainer = document.getElementById("leaderboardContainer");
@@ -999,6 +1003,244 @@ async function renderPlatformsSection(filterPlatform = "all") {
     body.innerHTML = html;
   } catch (err) {
     body.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load timeline</div><div class="empty-sub">${err.message}</div></div>`;
+  }
+}
+
+// ─── Share Achievements Card Rendering & Logic ─────────────────────────────
+function renderShareCard(data, history) {
+  const totalSolvedEl = document.getElementById("shareTotalSolved");
+  const currentStreakEl = document.getElementById("shareCurrentStreak");
+  const longestStreakEl = document.getElementById("shareLongestStreak");
+  const questionsListEl = document.getElementById("shareQuestionsList");
+
+  if (!totalSolvedEl || !currentStreakEl || !longestStreakEl || !questionsListEl) return;
+
+  const total = data.syncedCount || 0;
+  const streak = data.streakCount || 0;
+  const longest = computeLongestStreak(history);
+
+  totalSolvedEl.textContent = total;
+  currentStreakEl.textContent = streak;
+  longestStreakEl.textContent = longest;
+
+  // Platform Counts
+  const platformCounts = { LeetCode: 0, Codeforces: 0, GeeksforGeeks: 0, HackerRank: 0 };
+  
+  // Helper to identify platform
+  const getPlatform = (entry) => {
+    if (entry.platform) return entry.platform;
+    const path = entry.githubPath || "";
+    if (path.startsWith("Codeforces/")) return "Codeforces";
+    if (path.startsWith("GeeksforGeeks/")) return "GeeksforGeeks";
+    if (path.startsWith("HackerRank/")) return "HackerRank";
+    return "LeetCode";
+  };
+
+  history.forEach(entry => {
+    const plat = getPlatform(entry);
+    if (platformCounts[plat] !== undefined) platformCounts[plat]++;
+  });
+
+  document.getElementById("shareCountLeetCode").textContent = platformCounts.LeetCode;
+  document.getElementById("shareCountCodeforces").textContent = platformCounts.Codeforces;
+  document.getElementById("shareCountGeeksforGeeks").textContent = platformCounts.GeeksforGeeks;
+  document.getElementById("shareCountHackerRank").textContent = platformCounts.HackerRank;
+
+  // Render Scrollable Questions List
+  if (history.length === 0) {
+    questionsListEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:12px;">No questions synced yet</div>`;
+  } else {
+    questionsListEl.innerHTML = history.map(entry => {
+      const plat = getPlatform(entry);
+      let platIcon = "💻";
+      if (plat === "LeetCode") platIcon = "🧡";
+      else if (plat === "Codeforces") platIcon = "💙";
+      else if (plat === "GeeksforGeeks") platIcon = "💚";
+      else if (plat === "HackerRank") platIcon = "💜";
+
+      const diff = entry.difficulty || "Unknown";
+      const diffClass = `badge-${diff.toLowerCase()}`;
+      const qId = entry.questionId ? `#${entry.questionId} ` : "";
+
+      return `
+        <div class="share-question-item">
+          <div style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
+            <span style="font-size:14px; flex-shrink:0;">${platIcon}</span>
+            <span class="share-question-name" title="${entry.title || ""}">${qId}${entry.title || "—"}</span>
+          </div>
+          <span class="badge ${diffClass}" style="font-size:9px; padding:1px 5px; flex-shrink:0;">${diff}</span>
+        </div>
+      `;
+    }).join("");
+  }
+}
+
+function generateShareText(data, history) {
+  const total = data.syncedCount || 0;
+  const streak = data.streakCount || 0;
+  const longest = computeLongestStreak(history);
+  
+  // Platform counts
+  const platformCounts = { LeetCode: 0, Codeforces: 0, GeeksforGeeks: 0, HackerRank: 0 };
+  const diffCounts = { Easy: 0, Medium: 0, Hard: 0, Unknown: 0 };
+  const langCounts = {};
+
+  const getPlatform = (entry) => {
+    if (entry.platform) return entry.platform;
+    const path = entry.githubPath || "";
+    if (path.startsWith("Codeforces/")) return "Codeforces";
+    if (path.startsWith("GeeksforGeeks/")) return "GeeksforGeeks";
+    if (path.startsWith("HackerRank/")) return "HackerRank";
+    return "LeetCode";
+  };
+  
+  history.forEach(item => {
+    const plat = getPlatform(item);
+    if (platformCounts[plat] !== undefined) {
+      platformCounts[plat]++;
+    }
+    if (item.difficulty && diffCounts[item.difficulty] !== undefined) {
+      diffCounts[item.difficulty]++;
+    } else if (item.difficulty) {
+      diffCounts.Unknown++;
+    }
+    if (item.lang) {
+      const norm = normalizeLanguage(item.lang);
+      if (norm) langCounts[norm] = (langCounts[norm] || 0) + 1;
+    }
+  });
+
+  const sortedLangs = Object.entries(langCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([lang, count]) => `${lang} (${count})`)
+    .join(", ");
+
+  let text = `🚀 *My Code2Git Achievements* 🚀\n\n`;
+  text += `📊 *Summary Stats*:\n`;
+  text += `• Total Solved: ${total} problem${total !== 1 ? 's' : ''}\n`;
+  text += `• Current Streak: 🔥 ${streak} day${streak !== 1 ? 's' : ''}\n`;
+  text += `• Longest Streak: 👑 ${longest} day${longest !== 1 ? 's' : ''}\n\n`;
+  
+  text += `🖥️ *Platform Breakdown*:\n`;
+  text += `• LeetCode: ${platformCounts.LeetCode}\n`;
+  text += `• Codeforces: ${platformCounts.Codeforces}\n`;
+  text += `• GeeksforGeeks: ${platformCounts.GeeksforGeeks}\n`;
+  text += `• HackerRank: ${platformCounts.HackerRank}\n\n`;
+  
+  text += `📈 *Difficulty Levels*:\n`;
+  text += `• Easy: ${diffCounts.Easy}\n`;
+  text += `• Medium: ${diffCounts.Medium}\n`;
+  text += `• Hard: ${diffCounts.Hard}\n\n`;
+
+  if (sortedLangs) {
+    text += `🔤 *Top Languages*: ${sortedLangs}\n\n`;
+  }
+
+  // Solved questions (limit to top 5)
+  if (history.length > 0) {
+    text += `📝 *Latest Solved Problems*:\n`;
+    const items = history.slice(0, 5);
+    items.forEach((item, idx) => {
+      const qId = item.questionId ? `#${item.questionId} ` : "";
+      text += `${idx + 1}. [${getPlatform(item)}] ${qId}${item.title || "Unknown"} (${item.difficulty || "Medium"})\n`;
+    });
+    if (history.length > 5) {
+      text += `...and ${history.length - 5} more!\n`;
+    }
+    text += `\n`;
+  }
+  
+  const repoOwner = data.ghOwner || "krishnasahoo11156";
+  const repoName = data.ghRepo || "Code2Git";
+  text += `Check out my GitHub Solutions Repo: https://github.com/${repoOwner}/${repoName}\n`;
+  text += `Shared via Code2Git 🚀`;
+  
+  return text;
+}
+
+function showShareToast(message) {
+  const existing = document.querySelector(".share-toast");
+  if (existing) existing.remove();
+
+  const toast = document.createElement("div");
+  toast.className = "share-toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity 0.4s ease";
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+function setupShareButton(data, history) {
+  const btnShare = document.getElementById("btnShareAchievements");
+  const dropdown = document.getElementById("shareDropdown");
+
+  if (!btnShare || !dropdown) return;
+
+  // Toggle dropdown on button click
+  btnShare.onclick = (e) => {
+    e.stopPropagation();
+    const isVisible = dropdown.style.display === "flex";
+    dropdown.style.display = isVisible ? "none" : "flex";
+  };
+
+  // Close dropdown on click outside
+  document.addEventListener("click", () => {
+    dropdown.style.display = "none";
+  });
+
+  // Handle WhatsApp Share
+  const btnWhatsApp = document.getElementById("btnShareWhatsApp");
+  if (btnWhatsApp) {
+    btnWhatsApp.onclick = (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+      const text = generateShareText(data, history);
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(url, "_blank");
+    };
+  }
+
+  // Handle Native Share
+  const btnNative = document.getElementById("btnShareNative");
+  if (btnNative) {
+    btnNative.onclick = (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+      const text = generateShareText(data, history);
+      if (navigator.share) {
+        navigator.share({
+          title: "My Code2Git Achievements",
+          text: text
+        }).catch(err => {
+          console.log("Error sharing natively:", err);
+        });
+      } else {
+        // Fallback to Clipboard copy if not supported
+        navigator.clipboard.writeText(text).then(() => {
+          showShareToast("📋 Native share not supported. Stats copied to clipboard!");
+        });
+      }
+    };
+  }
+
+  // Handle Clipboard Copy
+  const btnCopy = document.getElementById("btnShareCopy");
+  if (btnCopy) {
+    btnCopy.onclick = (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+      const text = generateShareText(data, history);
+      navigator.clipboard.writeText(text).then(() => {
+        showShareToast("📋 Stats copied to clipboard!");
+      }).catch(err => {
+        showShareToast("❌ Failed to copy stats to clipboard");
+      });
+    };
   }
 }
 

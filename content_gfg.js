@@ -31,6 +31,7 @@ if (!window.__gfgSyncContentLoaded) {
 
   // Watch the DOM for success indicators
   const observer = new MutationObserver(() => {
+    if (!window.location.pathname.includes("/problems/")) return;
     // Look for success messages like "Problem Solved Successfully" or success modals
     // Check for exact element containing success message, filtering out container divs via character length
     const successHeader = document.querySelector(".congratulations-modal") || 
@@ -56,6 +57,7 @@ if (!window.__gfgSyncContentLoaded) {
 
   // Reset flag when user changes code or clicks reset/submits again
   document.addEventListener("click", (e) => {
+    if (!window.location.pathname.includes("/problems/")) return;
     const text = e.target.textContent || "";
     // Match any click on button or div containing Submit/Compile/Run
     if (text.includes("Submit") || text.includes("Compile") || text.includes("Run")) {
@@ -66,6 +68,7 @@ if (!window.__gfgSyncContentLoaded) {
 
   // Reset flag on keyboard shortcuts that compile or submit
   document.addEventListener("keydown", (e) => {
+    if (!window.location.pathname.includes("/problems/")) return;
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       logToBackground("Ctrl/Cmd + Enter keyboard shortcut detected. Resetting processed flag.");
       window.__gfgProcessed = false;

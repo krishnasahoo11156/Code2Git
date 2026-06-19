@@ -202,6 +202,7 @@ async function handleSubmissionSeen(submissionId, tabId) {
       // ⑧ Store rich history entry for the dashboard
       await appendToSyncHistory({
         submissionId,
+        platform: "LeetCode",
         questionId: details.question?.questionId,
         title: details.question?.title,
         titleSlug: details.question?.titleSlug,
@@ -1062,6 +1063,7 @@ async function handleHackerRankSubmission(slug, submissionId, tabId) {
 
       await appendToSyncHistory({
         submissionId,
+        platform: "HackerRank",
         questionId: String(sub.challenge_id || "0"),
         title,
         titleSlug: slug,
@@ -1196,6 +1198,7 @@ async function startCodeforcesPolling(tabId) {
 
         await appendToSyncHistory({
           submissionId,
+          platform: "Codeforces",
           questionId: `${latest.contestId}${slug}`,
           title,
           titleSlug: slug,
@@ -1288,6 +1291,7 @@ async function handleGfgAccepted(data, tabId) {
 
       await appendToSyncHistory({
         submissionId,
+        platform: "GeeksforGeeks",
         questionId: slug,
         title,
         titleSlug: slug,

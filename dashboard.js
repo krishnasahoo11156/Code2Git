@@ -44,23 +44,51 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Tabs Navigation
   const btnShowStats = document.getElementById("btnShowStats");
   const btnShowLeaderboard = document.getElementById("btnShowLeaderboard");
+  const btnShowPlatforms = document.getElementById("btnShowPlatforms");
   const statsContainer = document.getElementById("statsContainer");
   const leaderboardContainer = document.getElementById("leaderboardContainer");
+  const platformsContainer = document.getElementById("platformsContainer");
 
   btnShowStats.addEventListener("click", () => {
     btnShowStats.classList.add("active");
     btnShowLeaderboard.classList.remove("active");
+    btnShowPlatforms.classList.remove("active");
     statsContainer.style.display = "block";
     leaderboardContainer.style.display = "none";
+    platformsContainer.style.display = "none";
   });
 
   btnShowLeaderboard.addEventListener("click", () => {
     btnShowLeaderboard.classList.add("active");
     btnShowStats.classList.remove("active");
+    btnShowPlatforms.classList.remove("active");
     statsContainer.style.display = "none";
     leaderboardContainer.style.display = "block";
+    platformsContainer.style.display = "none";
     fetchAndRenderLeaderboard();
   });
+
+  btnShowPlatforms.addEventListener("click", () => {
+    btnShowPlatforms.classList.add("active");
+    btnShowStats.classList.remove("active");
+    btnShowLeaderboard.classList.remove("active");
+    statsContainer.style.display = "none";
+    leaderboardContainer.style.display = "none";
+    platformsContainer.style.display = "block";
+    renderPlatformsSection();
+  });
+
+  // Platforms timeline filter
+  const platformTimelineFilter = document.getElementById("platformTimelineFilter");
+  if (platformTimelineFilter) {
+    platformTimelineFilter.addEventListener("click", (e) => {
+      const btn = e.target.closest(".filter-btn");
+      if (!btn) return;
+      platformTimelineFilter.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderPlatformsSection(btn.dataset.platform);
+    });
+  }
 
   // Leaderboard toggles setup (Global vs Club)
   const dbConfig = await chrome.storage.local.get(["leaderboardUrl"]);
@@ -582,6 +610,13 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     if (leaderboardContainer && leaderboardContainer.style.display !== "none") {
       fetchAndRenderLeaderboard();
     }
+
+    // Also refresh platforms if it is currently visible
+    const platformsContainer = document.getElementById("platformsContainer");
+    if (platformsContainer && platformsContainer.style.display !== "none") {
+      const activePlatformFilter = document.querySelector("#platformTimelineFilter .filter-btn.active")?.dataset.platform || "all";
+      renderPlatformsSection(activePlatformFilter);
+    }
   }
 });
 
@@ -730,6 +765,206 @@ async function fetchAndRenderLeaderboard() {
     } catch (fallbackErr) {
       container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load leaderboard</div><div class="empty-sub">${err.message}</div></div>`;
     }
+  }
+}
+
+// ─── Platforms Section Render ─────────────────────────────────────────────
+async function renderPlatformsSection(filterPlatform = "all") {
+  const grid = document.getElementById("platformStatsGrid");
+  const body = document.getElementById("platformsBody");
+  if (!grid || !body) return;
+
+  grid.innerHTML = `<div style="text-align:center;width:100%;grid-column:1/-1;padding:20px;color:var(--text-muted);"><span class="spinner"></span> Loading stats…</div>`;
+  body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);"><span class="spinner"></span> Loading timeline…</div>`;
+
+  try {
+    const data = await chrome.storage.local.get([
+      "syncHistory", "ghOwner", "ghRepo", "ghBranch"
+    ]);
+
+    const history = data.syncHistory || [];
+    const ghOwner = data.ghOwner || "";
+    const ghRepo = data.ghRepo || "";
+    const ghBranch = data.ghBranch || "main";
+
+    // Helper to identify platform
+    const getPlatform = (entry) => {
+      if (entry.platform) return entry.platform;
+      const path = entry.githubPath || "";
+      if (path.startsWith("Codeforces/")) return "Codeforces";
+      if (path.startsWith("GeeksforGeeks/")) return "GeeksforGeeks";
+      if (path.startsWith("HackerRank/")) return "HackerRank";
+      return "LeetCode";
+    };
+
+    // Calculate platform counts
+    const counts = { LeetCode: 0, Codeforces: 0, GeeksforGeeks: 0, HackerRank: 0 };
+    history.forEach(entry => {
+      const plat = getPlatform(entry);
+      if (counts[plat] !== undefined) counts[plat]++;
+    });
+
+    // Render Stats Cards
+    grid.innerHTML = `
+      <div class="stat-card animate delay-1" style="--card-accent: #ffa116;">
+        <span class="icon">🧡</span>
+        <div class="num">${counts.LeetCode}</div>
+        <div class="lbl">LeetCode</div>
+        <div class="sub">Solved problems</div>
+      </div>
+      <div class="stat-card animate delay-2" style="--card-accent: #58a6ff;">
+        <span class="icon">💙</span>
+        <div class="num">${counts.Codeforces}</div>
+        <div class="lbl">Codeforces</div>
+        <div class="sub">Solved problems</div>
+      </div>
+      <div class="stat-card animate delay-3" style="--card-accent: #2ea44f;">
+        <span class="icon">💚</span>
+        <div class="num">${counts.GeeksforGeeks}</div>
+        <div class="lbl">GeeksforGeeks</div>
+        <div class="sub">Solved problems</div>
+      </div>
+      <div class="stat-card animate delay-4" style="--card-accent: #bc8cff;">
+        <span class="icon">💜</span>
+        <div class="num">${counts.HackerRank}</div>
+        <div class="lbl">HackerRank</div>
+        <div class="sub">Solved problems</div>
+      </div>
+    `;
+
+    // Filter timeline entries
+    const filteredHistory = filterPlatform === "all"
+      ? history
+      : history.filter(entry => getPlatform(entry) === filterPlatform);
+
+    if (filteredHistory.length === 0) {
+      body.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">📅</div>
+          <div class="empty-title">No problems found</div>
+          <div class="empty-sub">No solved problems recorded for <strong>${filterPlatform === "all" ? "any platform" : filterPlatform}</strong> yet.</div>
+        </div>`;
+      return;
+    }
+
+    // Group chronologically
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+    const weekStart = todayStart - 6 * 24 * 60 * 60 * 1000;
+
+    const groups = {
+      today: [],
+      yesterday: [],
+      thisWeek: [],
+      older: []
+    };
+
+    filteredHistory.forEach(entry => {
+      const ts = entry.timestamp;
+      if (!ts) {
+        groups.older.push(entry);
+        return;
+      }
+      if (ts >= todayStart) {
+        groups.today.push(entry);
+      } else if (ts >= yesterdayStart) {
+        groups.yesterday.push(entry);
+      } else if (ts >= weekStart) {
+        groups.thisWeek.push(entry);
+      } else {
+        groups.older.push(entry);
+      }
+    });
+
+    let html = "";
+    const groupDefs = [
+      { key: "today", title: "Today" },
+      { key: "yesterday", title: "Yesterday" },
+      { key: "thisWeek", title: "This Week" },
+      { key: "older", title: "Older" }
+    ];
+
+    groupDefs.forEach(g => {
+      const items = groups[g.key];
+      if (items.length === 0) return;
+
+      const itemsHtml = items.map(entry => {
+        const plat = getPlatform(entry);
+        const badgeCls = `badge-${plat.toLowerCase()}`;
+        const diff = entry.difficulty || "Unknown";
+        const diffCls = `badge-${diff.toLowerCase()}`;
+        const ghPath = entry.githubPath || "";
+        const ghUrl = ghOwner && ghRepo && ghPath
+          ? `https://github.com/${ghOwner}/${ghRepo}/blob/${ghBranch}/${ghPath}`
+          : "";
+        
+        let platIcon = "💻";
+        if (plat === "LeetCode") platIcon = "🧡";
+        else if (plat === "Codeforces") platIcon = "💙";
+        else if (plat === "GeeksforGeeks") platIcon = "💚";
+        else if (plat === "HackerRank") platIcon = "💜";
+
+        const titleHtml = ghUrl
+          ? `<a href="${ghUrl}" target="_blank" title="View on GitHub">${entry.title || "—"}</a>`
+          : (entry.title || "—");
+
+        const qId = entry.questionId ? `#${entry.questionId}` : "";
+        const qIdHtml = qId ? `<span style="color:var(--text-dim);font-size:11px;margin-right:6px;">${qId}</span>` : "";
+
+        const ghLinkHtml = ghUrl
+          ? `<a class="gh-link" href="${ghUrl}" target="_blank">
+               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                 <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+               </svg> View code
+             </a>`
+          : "";
+
+        let timeStr = "";
+        if (entry.timestamp) {
+          const d = new Date(entry.timestamp);
+          if (entry.timestamp >= yesterdayStart) {
+            timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          } else {
+            timeStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' at ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+        } else {
+          timeStr = "—";
+        }
+
+        return `
+          <div class="timeline-item">
+            <div class="timeline-item-left">
+              <span class="platform-badge ${badgeCls}">${platIcon} ${plat}</span>
+              <div style="min-width:0;flex:1;">
+                <div class="timeline-item-title">${qIdHtml}${titleHtml}</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                  <span class="badge ${diffCls}" style="font-size:9px;padding:1px 5px;">${diff}</span>
+                  <span class="badge badge-lang" style="font-size:9px;padding:1px 5px;">${entry.lang || "—"}</span>
+                  <span class="timeline-item-time">${timeStr}</span>
+                </div>
+              </div>
+            </div>
+            <div class="timeline-item-right">
+              ${ghLinkHtml}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      html += `
+        <div class="timeline-group">
+          <div class="timeline-group-title">${g.title}</div>
+          <div class="timeline-items">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    });
+
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load timeline</div><div class="empty-sub">${err.message}</div></div>`;
   }
 }
 

@@ -709,6 +709,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   } else if (msg.type === "GFG_ACCEPTED") {
     handleGfgAccepted(msg.data, sender.tab?.id);
     sendResponse({ ok: true });
+  } else if (msg.type === "GFG_LOG") {
+    logDebug(msg.message, msg.level || LOG_LEVEL.INFO);
+    sendResponse({ ok: true });
   } else if (msg.type === "FORCE_LEADERBOARD_SYNC") {
     forceLeaderboardSync();
     sendResponse({ ok: true });

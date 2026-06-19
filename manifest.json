@@ -20,7 +20,9 @@
     "https://*.codeforces.com/*",
     "https://www.hackerrank.com/*",
     "https://*.geeksforgeeks.org/*",
-    "https://practiceapi.geeksforgeeks.org/*"
+    "https://practiceapi.geeksforgeeks.org/*",
+    "https://*.firebaseio.com/*",
+    "https://*.firebasedatabase.app/*"
   ],
   "background": {
     "service_worker": "background.js"

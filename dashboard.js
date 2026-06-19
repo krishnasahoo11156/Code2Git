@@ -1242,5 +1242,225 @@ function setupShareButton(data, history) {
       });
     };
   }
+
+  // Handle Download Image Card (PNG)
+  const btnDownloadImage = document.getElementById("btnShareDownloadImage");
+  if (btnDownloadImage) {
+    btnDownloadImage.onclick = (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+      try {
+        const canvas = generateShareCardCanvas(data, history);
+        const dataUrl = canvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.download = `code2git-achievements-${Date.now()}.png`;
+        link.href = dataUrl;
+        link.click();
+        showShareToast("🖼️ Achievements card PNG downloaded!");
+      } catch (err) {
+        console.error("Error downloading image:", err);
+        showShareToast("❌ Failed to generate achievements card image");
+      }
+    };
+  }
+
+  // Handle Share Image Card (Native)
+  const btnShareImageNative = document.getElementById("btnShareImageNative");
+  if (btnShareImageNative) {
+    btnShareImageNative.onclick = (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+      try {
+        const canvas = generateShareCardCanvas(data, history);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            showShareToast("❌ Failed to generate image blob");
+            return;
+          }
+          const file = new File([blob], `code2git-achievements-${Date.now()}.png`, { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: "My Code2Git Achievements",
+              text: "Check out my coding stats synced via Code2Git!"
+            }).catch(err => {
+              console.log("Error sharing natively:", err);
+            });
+          } else {
+            // Fallback to Download PNG if native sharing isn't supported for files
+            const dataUrl = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.download = `code2git-achievements-${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+            showShareToast("⚠️ Native image sharing not supported. Image downloaded instead!");
+          }
+        }, "image/png");
+      } catch (err) {
+        console.error("Error sharing image:", err);
+        showShareToast("❌ Failed to share achievements card image");
+      }
+    };
+  }
+}
+
+// ─── Offscreen Canvas Image Generator ──────────────────────────────────────
+function generateShareCardCanvas(data, history) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 800;
+  canvas.height = 450;
+  const ctx = canvas.getContext("2d");
+
+  // 1. Background gradient
+  const grad = ctx.createLinearGradient(0, 0, 800, 450);
+  grad.addColorStop(0, "#0d1117");
+  grad.addColorStop(1, "#161b22");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 800, 450);
+
+  // 2. Glowing glassmorphism circles
+  ctx.beginPath();
+  const glow1 = ctx.createRadialGradient(720, 90, 10, 720, 90, 250);
+  glow1.addColorStop(0, "rgba(188, 140, 255, 0.15)");
+  glow1.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = glow1;
+  ctx.arc(720, 90, 250, 0, 2 * Math.PI);
+  ctx.fill();
+
+  ctx.beginPath();
+  const glow2 = ctx.createRadialGradient(80, 360, 10, 80, 360, 250);
+  glow2.addColorStop(0, "rgba(88, 166, 255, 0.15)");
+  glow2.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = glow2;
+  ctx.arc(80, 360, 250, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // 3. Card border
+  ctx.strokeStyle = "#30363d";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, 796, 446);
+
+  // 4. Header title & subtitle
+  ctx.fillStyle = "#e6edf3";
+  ctx.font = "bold 26px sans-serif";
+  ctx.fillText("Code2Git Achievements Card", 40, 60);
+
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "14px sans-serif";
+  ctx.fillText("Auto-syncing LeetCode, Codeforces & more to GitHub", 40, 85);
+
+  const total = data.syncedCount || 0;
+  const streak = data.streakCount || 0;
+  const longest = computeLongestStreak(history);
+
+  // 5. Draw rounded rectangles for the 3 main cards
+  const drawRoundRect = (x, y, w, h, r, fillColor, strokeColor) => {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    if (fillColor) {
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+    if (strokeColor) {
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  };
+
+  // Card 1: Total Solved
+  drawRoundRect(40, 120, 220, 110, 8, "#161b22", "#30363d");
+  ctx.fillStyle = "#3fb950";
+  ctx.font = "bold 44px sans-serif";
+  ctx.fillText(String(total), 60, 175);
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "bold 11px sans-serif";
+  ctx.fillText("TOTAL PROBLEMS SOLVED", 60, 205);
+
+  // Card 2: Current Streak
+  drawRoundRect(280, 120, 220, 110, 8, "#161b22", "#30363d");
+  ctx.fillStyle = "#ffa116";
+  ctx.font = "bold 44px sans-serif";
+  ctx.fillText(String(streak) + " 🔥", 300, 175);
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "bold 11px sans-serif";
+  ctx.fillText("CURRENT STREAK", 300, 205);
+
+  // Card 3: Longest Streak
+  drawRoundRect(520, 120, 240, 110, 8, "#161b22", "#30363d");
+  ctx.fillStyle = "#bc8cff";
+  ctx.font = "bold 44px sans-serif";
+  ctx.fillText(String(longest) + " 👑", 540, 175);
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "bold 11px sans-serif";
+  ctx.fillText("LONGEST STREAK", 540, 205);
+
+  // Platform breakdown counts
+  const platformCounts = { LeetCode: 0, Codeforces: 0, GeeksforGeeks: 0, HackerRank: 0 };
+  const getPlatform = (entry) => {
+    if (entry.platform) return entry.platform;
+    const path = entry.githubPath || "";
+    if (path.startsWith("Codeforces/")) return "Codeforces";
+    if (path.startsWith("GeeksforGeeks/")) return "GeeksforGeeks";
+    if (path.startsWith("HackerRank/")) return "HackerRank";
+    return "LeetCode";
+  };
+  history.forEach(entry => {
+    const plat = getPlatform(entry);
+    if (platformCounts[plat] !== undefined) platformCounts[plat]++;
+  });
+
+  // 6. Draw Platform Activity section
+  ctx.fillStyle = "#e6edf3";
+  ctx.font = "bold 16px sans-serif";
+  ctx.fillText("Platform Activity", 40, 280);
+
+  ctx.font = "14px sans-serif";
+  ctx.fillStyle = "#ffa116"; ctx.fillText(`LeetCode: ${platformCounts.LeetCode}`, 40, 312);
+  ctx.fillStyle = "#58a6ff"; ctx.fillText(`Codeforces: ${platformCounts.Codeforces}`, 180, 312);
+  ctx.fillStyle = "#2ea44f"; ctx.fillText(`GeeksforGeeks: ${platformCounts.GeeksforGeeks}`, 320, 312);
+  ctx.fillStyle = "#bc8cff"; ctx.fillText(`HackerRank: ${platformCounts.HackerRank}`, 480, 312);
+
+  // 7. Draw Difficulty Segregation
+  const diffCounts = { Easy: 0, Medium: 0, Hard: 0 };
+  history.forEach(entry => {
+    if (entry.difficulty && diffCounts[entry.difficulty] !== undefined) {
+      diffCounts[entry.difficulty]++;
+    }
+  });
+
+  ctx.fillStyle = "#e6edf3";
+  ctx.font = "bold 16px sans-serif";
+  ctx.fillText("Difficulty Segregation", 40, 355);
+
+  ctx.font = "14px sans-serif";
+  ctx.fillStyle = "#00b8a3"; ctx.fillText(`Easy: ${diffCounts.Easy}`, 40, 385);
+  ctx.fillStyle = "#ffa116"; ctx.fillText(`Medium: ${diffCounts.Medium}`, 180, 385);
+  ctx.fillStyle = "#ff375f"; ctx.fillText(`Hard: ${diffCounts.Hard}`, 320, 385);
+
+  // 8. Draw Decorative Badge
+  drawRoundRect(720, 35, 40, 40, 8, "#58a6ff", null);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 12px sans-serif";
+  ctx.fillText("C2G", 728, 59);
+
+  // 9. Draw Footer
+  ctx.fillStyle = "#484f58";
+  ctx.font = "11px sans-serif";
+  const repoOwner = data.ghOwner || "krishnasahoo11156";
+  const repoName = data.ghRepo || "Code2Git";
+  ctx.fillText(`github.com/${repoOwner}/${repoName}`, 40, 425);
+  ctx.fillText("Generated by Code2Git Chrome Extension", 560, 425);
+
+  return canvas;
 }
 

@@ -18,9 +18,10 @@ const LANG_COLORS = [
 
 // ─── Language Normalization Helper ──────────────────────────────────────────
 function normalizeLanguage(lang) {
-  if (!lang) return "Unknown";
+  if (!lang) return "";
   const name = lang.trim();
   const lower = name.toLowerCase();
+  if (lower === "unknown" || lower === "n/a" || lower === "none") return "";
 
   if (lower.startsWith("java")) return "Java";
   if (lower.includes("c++") || lower.includes("cpp") || lower.includes("g++")) return "C++";

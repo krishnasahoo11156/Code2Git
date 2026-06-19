@@ -232,6 +232,9 @@ async function saveConfig() {
     connMethod: "token"
   });
 
+  // Trigger immediate leaderboard sync to update display name and stats
+  chrome.runtime.sendMessage({ type: "FORCE_LEADERBOARD_SYNC" });
+
   setGhStatus("connected");
   showStatus("✓ Saved! Go solve a problem on LeetCode.");
 
@@ -532,6 +535,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
       if ($("oauthActivation")) $("oauthActivation").style.display = "none";
       if (oauthCountdownTimer) clearInterval(oauthCountdownTimer);
       chrome.storage.local.remove("oauthStatus");
+      
+      // Trigger immediate leaderboard sync to register user with display name
+      chrome.runtime.sendMessage({ type: "FORCE_LEADERBOARD_SYNC" });
     } else if (status === "expired") {
       showStatus("OAuth code expired. Please try again.", true);
       if ($("oauthActivation")) $("oauthActivation").style.display = "none";

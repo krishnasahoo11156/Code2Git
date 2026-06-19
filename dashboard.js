@@ -62,6 +62,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     fetchAndRenderLeaderboard();
   });
 
+  // Leaderboard toggles setup (Global vs Club)
+  const dbConfig = await chrome.storage.local.get(["leaderboardUrl"]);
+  const hasCustomDb = dbConfig.leaderboardUrl && 
+                      dbConfig.leaderboardUrl.trim() !== "" && 
+                      dbConfig.leaderboardUrl.trim() !== "https://code2git-leaderboard-default-rtdb.firebaseio.com";
+  
+  const toggleContainer = document.getElementById("leaderboardToggleContainer");
+  const btnGlobal = document.getElementById("btnLeaderboardGlobal");
+  const btnClub = document.getElementById("btnLeaderboardClub");
+
+  if (hasCustomDb && toggleContainer && btnGlobal && btnClub) {
+    toggleContainer.style.display = "flex";
+    btnGlobal.addEventListener("click", () => {
+      btnGlobal.classList.add("active");
+      btnClub.classList.remove("active");
+      fetchAndRenderLeaderboard();
+    });
+    btnClub.addEventListener("click", () => {
+      btnClub.classList.add("active");
+      btnGlobal.classList.remove("active");
+      fetchAndRenderLeaderboard();
+    });
+  }
+
   // Open Popup button handler (to comply with CSP)
   const btnOpenPopup = document.getElementById("btnOpenPopup");
   if (btnOpenPopup) {
@@ -517,7 +541,30 @@ function setupDiffFilter(history, ghOwner, ghRepo, ghBranch) {
 // Refresh the entire dashboard if new syncs happen while the page is open
 chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area !== "local") return;
-  if (changes.syncHistory || changes.syncedCount || changes.streakCount || changes.lastSync) {
+
+  const shouldRefreshLeaderboardToggles = changes.leaderboardUrl;
+  if (shouldRefreshLeaderboardToggles) {
+    const dbConfig = await chrome.storage.local.get(["leaderboardUrl"]);
+    const hasCustomDb = dbConfig.leaderboardUrl && 
+                        dbConfig.leaderboardUrl.trim() !== "" && 
+                        dbConfig.leaderboardUrl.trim() !== "https://code2git-leaderboard-default-rtdb.firebaseio.com";
+    
+    const toggleContainer = document.getElementById("leaderboardToggleContainer");
+    const btnGlobal = document.getElementById("btnLeaderboardGlobal");
+    const btnClub = document.getElementById("btnLeaderboardClub");
+
+    if (toggleContainer && btnGlobal && btnClub) {
+      if (hasCustomDb) {
+        toggleContainer.style.display = "flex";
+      } else {
+        toggleContainer.style.display = "none";
+        btnGlobal.classList.add("active");
+        btnClub.classList.remove("active");
+      }
+    }
+  }
+
+  if (changes.syncHistory || changes.syncedCount || changes.streakCount || changes.lastSync || changes.leaderboardUrl) {
     const data = await chrome.storage.local.get([
       "syncedCount", "streakCount", "lastSync",
       "syncHistory", "ghOwner", "ghRepo", "ghBranch"
@@ -545,7 +592,16 @@ async function fetchAndRenderLeaderboard() {
 
   try {
     const data = await chrome.storage.local.get(["leaderboardUrl"]);
-    const dbUrl = data.leaderboardUrl || "https://code2git-leaderboard-default-rtdb.firebaseio.com";
+    const btnClub = document.getElementById("btnLeaderboardClub");
+    const isClubActive = btnClub && btnClub.classList.contains("active");
+
+    const defaultUrl = "https://code2git-leaderboard-default-rtdb.firebaseio.com";
+    let dbUrl = defaultUrl;
+    
+    if (isClubActive && data.leaderboardUrl) {
+      dbUrl = data.leaderboardUrl.trim().replace(/\/$/, "");
+    }
+    
     const res = await fetch(`${dbUrl}/leaderboard.json`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 

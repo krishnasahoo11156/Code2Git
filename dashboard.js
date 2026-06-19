@@ -131,6 +131,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (hasCustomDb && toggleContainer && btnGlobal && btnClub) {
     toggleContainer.style.display = "flex";
+    btnGlobal.classList.remove("active");
+    btnClub.classList.add("active");
     btnGlobal.addEventListener("click", () => {
       btnGlobal.classList.add("active");
       btnClub.classList.remove("active");

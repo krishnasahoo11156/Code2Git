@@ -1353,6 +1353,7 @@ function generateShareCardCanvas(data, history) {
   canvas.width = 800;
   canvas.height = 450;
   const ctx = canvas.getContext("2d");
+  const fontStack = (size, weight = "normal") => `${weight} ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
 
   // Helper to draw rounded rectangles
   const drawRoundRect = (x, y, w, h, r, fillColor, strokeColor, strokeWidth = 1) => {
@@ -1407,63 +1408,40 @@ function generateShareCardCanvas(data, history) {
     return temp + "...";
   };
 
-  // 1. Background gradient
-  const grad = ctx.createLinearGradient(0, 0, 800, 450);
-  grad.addColorStop(0, "#0d1117");
-  grad.addColorStop(1, "#161b22");
-  ctx.fillStyle = grad;
+  // 1. Background (Flat elegant GitHub Dark background)
+  ctx.fillStyle = "#0d1117";
   ctx.fillRect(0, 0, 800, 450);
 
-  // 2. Glowing glassmorphism circles
-  ctx.beginPath();
-  const glow1 = ctx.createRadialGradient(720, 90, 10, 720, 90, 250);
-  glow1.addColorStop(0, "rgba(188, 140, 255, 0.12)");
-  glow1.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = glow1;
-  ctx.arc(720, 90, 250, 0, 2 * Math.PI);
-  ctx.fill();
-
-  ctx.beginPath();
-  const glow2 = ctx.createRadialGradient(80, 360, 10, 80, 360, 250);
-  glow2.addColorStop(0, "rgba(88, 166, 255, 0.12)");
-  glow2.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = glow2;
-  ctx.arc(80, 360, 250, 0, 2 * Math.PI);
-  ctx.fill();
-
-  // 3. Card border (Professional Gradient)
-  const borderGrad = ctx.createLinearGradient(0, 0, 800, 450);
-  borderGrad.addColorStop(0, "#58a6ff"); // Blue
-  borderGrad.addColorStop(1, "#bc8cff"); // Purple
-  ctx.strokeStyle = borderGrad;
-  ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, 796, 446);
+  // 3. Card border (Professional 1px Slate border)
+  ctx.strokeStyle = "#30363d";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, 799, 449);
 
   // 4. Header title, verified badge & subtitle
   ctx.fillStyle = "#e6edf3";
-  ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.font = fontStack(22, "bold");
   ctx.fillText("Code2Git Achievements", 40, 60);
   
   const titleWidth = ctx.measureText("Code2Git Achievements").width;
   const badgeX = 40 + titleWidth + 12;
   const badgeY = 41;
-
+ 
   // Draw verified pill badge
   const badgeText = "Verified Coder";
-  ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.font = fontStack(11, "bold");
   const badgeTextWidth = ctx.measureText(badgeText).width;
   const badgeWidth = badgeTextWidth + 28;
   const badgeHeight = 22;
-
+ 
   // Fill verified pill background and border
   drawRoundRect(badgeX, badgeY - 2, badgeWidth, badgeHeight, 11, "rgba(63, 185, 80, 0.12)", "rgba(63, 185, 80, 0.3)", 1);
-
+ 
   // Draw green checkmark circle
   ctx.beginPath();
   ctx.fillStyle = "#3fb950";
   ctx.arc(badgeX + 11, badgeY + 9, 6, 0, 2 * Math.PI);
   ctx.fill();
-
+ 
   // Draw white checkmark inside circle
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 1.8;
@@ -1472,14 +1450,14 @@ function generateShareCardCanvas(data, history) {
   ctx.lineTo(badgeX + 10.5, badgeY + 11);
   ctx.lineTo(badgeX + 13.5, badgeY + 7);
   ctx.stroke();
-
+ 
   // Draw text "Verified Coder"
   ctx.fillStyle = "#3fb950";
-  ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.font = fontStack(11, "bold");
   ctx.fillText(badgeText, badgeX + 22, badgeY + 13);
-
+ 
   ctx.fillStyle = "#8b949e";
-  ctx.font = "14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.font = fontStack(13);
   ctx.fillText("Auto-syncing LeetCode, Codeforces & more to GitHub", 40, 85);
 
   const total = data.syncedCount || 0;
@@ -1488,31 +1466,40 @@ function generateShareCardCanvas(data, history) {
 
   // 5. Draw rounded rectangles for the 3 main cards
   // Card 1: Total Solved
-  drawRoundRect(40, 110, 220, 100, 8, "#161b22", "#30363d");
-  ctx.fillStyle = "#3fb950";
-  ctx.font = "bold 40px sans-serif";
-  ctx.fillText(String(total), 60, 160);
+  drawRoundRect(40, 110, 220, 100, 6, "#161b22", "#21262d", 1);
+  ctx.fillStyle = "#2ea44f"; // GitHub Green
+  ctx.fillRect(40, 120, 4, 40);
+  
+  ctx.fillStyle = "#f0f6fc";
+  ctx.font = fontStack(38, "bold");
+  ctx.fillText(String(total), 60, 158);
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 10px sans-serif";
-  ctx.fillText("TOTAL PROBLEMS SOLVED", 60, 188);
+  ctx.font = fontStack(10, "bold");
+  ctx.fillText("TOTAL PROBLEMS SOLVED", 60, 185);
 
   // Card 2: Current Streak
-  drawRoundRect(280, 110, 220, 100, 8, "#161b22", "#30363d");
-  ctx.fillStyle = "#ffa116";
-  ctx.font = "bold 40px sans-serif";
-  ctx.fillText(String(streak) + " 🔥", 300, 160);
+  drawRoundRect(280, 110, 220, 100, 6, "#161b22", "#21262d", 1);
+  ctx.fillStyle = "#f0883e"; // GitHub/Codeforces Orange
+  ctx.fillRect(280, 120, 4, 40);
+  
+  ctx.fillStyle = "#f0f6fc";
+  ctx.font = fontStack(38, "bold");
+  ctx.fillText(String(streak), 300, 158);
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 10px sans-serif";
-  ctx.fillText("CURRENT STREAK", 300, 188);
+  ctx.font = fontStack(10, "bold");
+  ctx.fillText("CURRENT STREAK", 300, 185);
 
   // Card 3: Longest Streak
-  drawRoundRect(520, 110, 240, 100, 8, "#161b22", "#30363d");
-  ctx.fillStyle = "#bc8cff";
-  ctx.font = "bold 40px sans-serif";
-  ctx.fillText(String(longest) + " 👑", 540, 160);
+  drawRoundRect(520, 110, 240, 100, 6, "#161b22", "#21262d", 1);
+  ctx.fillStyle = "#8957e5"; // GitHub Purple
+  ctx.fillRect(520, 120, 4, 40);
+  
+  ctx.fillStyle = "#f0f6fc";
+  ctx.font = fontStack(38, "bold");
+  ctx.fillText(String(longest), 540, 158);
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 10px sans-serif";
-  ctx.fillText("LONGEST STREAK", 540, 188);
+  ctx.font = fontStack(10, "bold");
+  ctx.fillText("LONGEST STREAK", 540, 185);
 
   // Platform breakdown counts
   const platformCounts = { LeetCode: 0, Codeforces: 0, GeeksforGeeks: 0, HackerRank: 0 };
@@ -1533,10 +1520,10 @@ function generateShareCardCanvas(data, history) {
 
   // 6. Draw Platform Activity section (Column 1: x: 40 to 260)
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 10px sans-serif";
+  ctx.font = fontStack(10, "bold");
   ctx.fillText("PLATFORMS", 40, 252);
 
-  ctx.font = "12px sans-serif";
+  ctx.font = fontStack(12);
   const platData = [
     { name: "LeetCode", count: platformCounts.LeetCode, color: "#ffa116", bullet: "#ffa116" },
     { name: "Codeforces", count: platformCounts.Codeforces, color: "#58a6ff", bullet: "#58a6ff" },
@@ -1572,10 +1559,10 @@ function generateShareCardCanvas(data, history) {
   const diffTotal = diffCounts.Easy + diffCounts.Medium + diffCounts.Hard;
 
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 10px sans-serif";
+  ctx.font = fontStack(10, "bold");
   ctx.fillText("DIFFICULTY SEGREGATION", 320, 252);
 
-  ctx.font = "12px sans-serif";
+  ctx.font = fontStack(12);
   const diffData = [
     { name: "Easy", count: diffCounts.Easy, color: "#00b8a3", bullet: "#00b8a3" },
     { name: "Medium", count: diffCounts.Medium, color: "#ffa116", bullet: "#ffa116" },
@@ -1601,36 +1588,34 @@ function generateShareCardCanvas(data, history) {
 
   // 8. Draw Recent Problems (Column 3: x: 560 to 760)
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 10px sans-serif";
+  ctx.font = fontStack(10, "bold");
   ctx.fillText("RECENTLY SYNCED PROBLEMS", 560, 252);
 
   const recentItems = history.slice(0, 4);
   if (recentItems.length === 0) {
     ctx.fillStyle = "#484f58";
-    ctx.font = "italic 12px sans-serif";
+    ctx.font = fontStack(12, "italic");
     ctx.fillText("No problems synced yet", 560, 280);
   } else {
-    ctx.font = "12px sans-serif";
+    ctx.font = fontStack(12);
     recentItems.forEach((entry, i) => {
       const ry = 280 + i * 32;
       const plat = getPlatform(entry);
 
-      // Icon & platform identification
-      let platIcon = "🧡";
+      // Platform identification color
       let platColor = "#ffa116";
-      if (plat === "Codeforces") { platIcon = "💙"; platColor = "#58a6ff"; }
-      else if (plat === "GeeksforGeeks") { platIcon = "💚"; platColor = "#2ea44f"; }
-      else if (plat === "HackerRank") { platIcon = "💜"; platColor = "#bc8cff"; }
+      if (plat === "Codeforces") platColor = "#58a6ff";
+      else if (plat === "GeeksforGeeks") platColor = "#2ea44f";
+      else if (plat === "HackerRank") platColor = "#bc8cff";
 
-      // Draw platform icon indicator
-      ctx.fillStyle = platColor;
-      ctx.fillText(platIcon, 560, ry);
+      // Draw platform bullet
+      drawBullet(565, ry, platColor);
 
       // Truncate and draw title
       ctx.fillStyle = "#e6edf3";
       const qId = entry.questionId ? `#${entry.questionId} ` : "";
       const fullTitle = `${qId}${entry.title || "—"}`;
-      const truncTitle = truncateText(fullTitle, 135);
+      const truncTitle = truncateText(fullTitle, 140);
       ctx.fillText(truncTitle, 578, ry);
 
       // Draw mini difficulty badge
@@ -1641,17 +1626,17 @@ function generateShareCardCanvas(data, history) {
 
       drawRoundRect(725, ry - 11, 35, 14, 3, "rgba(0, 0, 0, 0.3)", diffColor, 1);
       ctx.fillStyle = diffColor;
-      ctx.font = "bold 9px sans-serif";
+      ctx.font = fontStack(9, "bold");
       ctx.fillText(diff.slice(0, 3).toUpperCase(), 733, ry - 1);
       
       // Reset font back for the next line
-      ctx.font = "12px sans-serif";
+      ctx.font = fontStack(12);
     });
   }
 
   // 8b. Draw User Name Tag Pill (aligned nicely in top right)
   const userName = data.displayName || data.ghOwner || "Coder";
-  ctx.font = "bold 13px sans-serif";
+  ctx.font = fontStack(13, "bold");
   const nameWidth = ctx.measureText(userName).width;
   const pillWidth = nameWidth + 24;
   const pillHeight = 26;
@@ -1660,12 +1645,12 @@ function generateShareCardCanvas(data, history) {
   drawRoundRect(pillX, pillY, pillWidth, pillHeight, 6, "#161b22", "#30363d");
 
   ctx.fillStyle = "#58a6ff";
-  ctx.font = "bold 12px sans-serif";
+  ctx.font = fontStack(12, "bold");
   ctx.fillText(userName, pillX + 12, pillY + 17);
 
   // 9. Draw Footer
   ctx.fillStyle = "#484f58";
-  ctx.font = "11px sans-serif";
+  ctx.font = fontStack(11);
   const repoOwner = data.ghOwner || "krishnasahoo11156";
   const repoName = data.ghRepo || "Code2Git";
   ctx.fillText(`github.com/${repoOwner}/${repoName}`, 40, 425);

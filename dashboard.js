@@ -49,7 +49,7 @@ function normalizeLanguage(lang) {
 document.addEventListener("DOMContentLoaded", async () => {
   const data = await chrome.storage.local.get([
     "syncedCount", "streakCount", "lastSync",
-    "syncHistory", "ghOwner", "ghRepo", "ghBranch"
+    "syncHistory", "ghOwner", "ghRepo", "ghBranch", "displayName"
   ]);
 
   const history  = data.syncHistory || [];
@@ -628,10 +628,10 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     }
   }
 
-  if (changes.syncHistory || changes.syncedCount || changes.streakCount || changes.lastSync || changes.leaderboardUrl) {
+  if (changes.syncHistory || changes.syncedCount || changes.streakCount || changes.lastSync || changes.leaderboardUrl || changes.displayName || changes.ghOwner) {
     const data = await chrome.storage.local.get([
       "syncedCount", "streakCount", "lastSync",
-      "syncHistory", "ghOwner", "ghRepo", "ghBranch"
+      "syncHistory", "ghOwner", "ghRepo", "ghBranch", "displayName"
     ]);
     const history = data.syncHistory || [];
     renderStatCards(data, history);
@@ -1019,6 +1019,17 @@ function renderShareCard(data, history) {
   const streak = data.streakCount || 0;
   const longest = computeLongestStreak(history);
 
+  const userName = data.displayName || data.ghOwner || "";
+  const userBadgeEl = document.getElementById("shareUserBadge");
+  if (userBadgeEl) {
+    if (userName) {
+      userBadgeEl.textContent = `👤 ${userName}`;
+      userBadgeEl.style.display = "inline-flex";
+    } else {
+      userBadgeEl.style.display = "none";
+    }
+  }
+
   totalSolvedEl.textContent = total;
   currentStreakEl.textContent = streak;
   longestStreakEl.textContent = longest;
@@ -1045,6 +1056,38 @@ function renderShareCard(data, history) {
   document.getElementById("shareCountCodeforces").textContent = platformCounts.Codeforces;
   document.getElementById("shareCountGeeksforGeeks").textContent = platformCounts.GeeksforGeeks;
   document.getElementById("shareCountHackerRank").textContent = platformCounts.HackerRank;
+
+  // Calculate & set Platform Progress Bars
+  const platformTotal = platformCounts.LeetCode + platformCounts.Codeforces + platformCounts.GeeksforGeeks + platformCounts.HackerRank;
+  const setBarWidth = (fillId, count, totalVal) => {
+    const el = document.getElementById(fillId);
+    if (el) {
+      const pct = totalVal > 0 ? (count / totalVal) * 100 : 0;
+      el.style.width = `${pct}%`;
+    }
+  };
+  setBarWidth("sharePlatformBarLeetCode", platformCounts.LeetCode, platformTotal);
+  setBarWidth("sharePlatformBarCodeforces", platformCounts.Codeforces, platformTotal);
+  setBarWidth("sharePlatformBarGeeksforGeeks", platformCounts.GeeksforGeeks, platformTotal);
+  setBarWidth("sharePlatformBarHackerRank", platformCounts.HackerRank, platformTotal);
+
+  // Difficulty Counts
+  const diffCounts = { Easy: 0, Medium: 0, Hard: 0 };
+  history.forEach(entry => {
+    if (entry.difficulty && diffCounts[entry.difficulty] !== undefined) {
+      diffCounts[entry.difficulty]++;
+    }
+  });
+
+  document.getElementById("shareCountEasy").textContent = diffCounts.Easy;
+  document.getElementById("shareCountMedium").textContent = diffCounts.Medium;
+  document.getElementById("shareCountHard").textContent = diffCounts.Hard;
+
+  // Calculate & set Difficulty Progress Bars
+  const diffTotal = diffCounts.Easy + diffCounts.Medium + diffCounts.Hard;
+  setBarWidth("shareDiffBarEasy", diffCounts.Easy, diffTotal);
+  setBarWidth("shareDiffBarMedium", diffCounts.Medium, diffTotal);
+  setBarWidth("shareDiffBarHard", diffCounts.Hard, diffTotal);
 
   // Render Scrollable Questions List
   if (history.length === 0) {
@@ -1311,50 +1354,8 @@ function generateShareCardCanvas(data, history) {
   canvas.height = 450;
   const ctx = canvas.getContext("2d");
 
-  // 1. Background gradient
-  const grad = ctx.createLinearGradient(0, 0, 800, 450);
-  grad.addColorStop(0, "#0d1117");
-  grad.addColorStop(1, "#161b22");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 800, 450);
-
-  // 2. Glowing glassmorphism circles
-  ctx.beginPath();
-  const glow1 = ctx.createRadialGradient(720, 90, 10, 720, 90, 250);
-  glow1.addColorStop(0, "rgba(188, 140, 255, 0.15)");
-  glow1.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = glow1;
-  ctx.arc(720, 90, 250, 0, 2 * Math.PI);
-  ctx.fill();
-
-  ctx.beginPath();
-  const glow2 = ctx.createRadialGradient(80, 360, 10, 80, 360, 250);
-  glow2.addColorStop(0, "rgba(88, 166, 255, 0.15)");
-  glow2.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = glow2;
-  ctx.arc(80, 360, 250, 0, 2 * Math.PI);
-  ctx.fill();
-
-  // 3. Card border
-  ctx.strokeStyle = "#30363d";
-  ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, 796, 446);
-
-  // 4. Header title & subtitle
-  ctx.fillStyle = "#e6edf3";
-  ctx.font = "bold 26px sans-serif";
-  ctx.fillText("Code2Git Achievements Card", 40, 60);
-
-  ctx.fillStyle = "#8b949e";
-  ctx.font = "14px sans-serif";
-  ctx.fillText("Auto-syncing LeetCode, Codeforces & more to GitHub", 40, 85);
-
-  const total = data.syncedCount || 0;
-  const streak = data.streakCount || 0;
-  const longest = computeLongestStreak(history);
-
-  // 5. Draw rounded rectangles for the 3 main cards
-  const drawRoundRect = (x, y, w, h, r, fillColor, strokeColor) => {
+  // Helper to draw rounded rectangles
+  const drawRoundRect = (x, y, w, h, r, fillColor, strokeColor, strokeWidth = 1) => {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
@@ -1372,37 +1373,146 @@ function generateShareCardCanvas(data, history) {
     }
     if (strokeColor) {
       ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = strokeWidth;
       ctx.stroke();
     }
   };
 
-  // Card 1: Total Solved
-  drawRoundRect(40, 120, 220, 110, 8, "#161b22", "#30363d");
+  // Helper to draw clean status bullets
+  const drawBullet = (bx, by, bcolor) => {
+    ctx.beginPath();
+    ctx.fillStyle = bcolor;
+    ctx.arc(bx, by - 4, 4, 0, 2 * Math.PI);
+    ctx.fill();
+  };
+
+  // Helper to draw progress bars
+  const drawProgressBar = (x, y, w, h, pct, color) => {
+    // Draw background track
+    drawRoundRect(x, y, w, h, h / 2, "#21262d", null);
+    // Draw fill
+    if (pct > 0) {
+      const fillWidth = Math.max(h, (pct / 100) * w);
+      drawRoundRect(x, y, fillWidth, h, h / 2, color, null);
+    }
+  };
+
+  // Helper to truncate text
+  const truncateText = (txt, maxWidth) => {
+    if (ctx.measureText(txt).width <= maxWidth) return txt;
+    let temp = txt;
+    while (temp.length > 0 && ctx.measureText(temp + "...").width > maxWidth) {
+      temp = temp.slice(0, -1);
+    }
+    return temp + "...";
+  };
+
+  // 1. Background gradient
+  const grad = ctx.createLinearGradient(0, 0, 800, 450);
+  grad.addColorStop(0, "#0d1117");
+  grad.addColorStop(1, "#161b22");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 800, 450);
+
+  // 2. Glowing glassmorphism circles
+  ctx.beginPath();
+  const glow1 = ctx.createRadialGradient(720, 90, 10, 720, 90, 250);
+  glow1.addColorStop(0, "rgba(188, 140, 255, 0.12)");
+  glow1.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = glow1;
+  ctx.arc(720, 90, 250, 0, 2 * Math.PI);
+  ctx.fill();
+
+  ctx.beginPath();
+  const glow2 = ctx.createRadialGradient(80, 360, 10, 80, 360, 250);
+  glow2.addColorStop(0, "rgba(88, 166, 255, 0.12)");
+  glow2.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = glow2;
+  ctx.arc(80, 360, 250, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // 3. Card border (Professional Gradient)
+  const borderGrad = ctx.createLinearGradient(0, 0, 800, 450);
+  borderGrad.addColorStop(0, "#58a6ff"); // Blue
+  borderGrad.addColorStop(1, "#bc8cff"); // Purple
+  ctx.strokeStyle = borderGrad;
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, 796, 446);
+
+  // 4. Header title, verified badge & subtitle
+  ctx.fillStyle = "#e6edf3";
+  ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.fillText("Code2Git Achievements", 40, 60);
+  
+  const titleWidth = ctx.measureText("Code2Git Achievements").width;
+  const badgeX = 40 + titleWidth + 12;
+  const badgeY = 41;
+
+  // Draw verified pill badge
+  const badgeText = "Verified Coder";
+  ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  const badgeTextWidth = ctx.measureText(badgeText).width;
+  const badgeWidth = badgeTextWidth + 28;
+  const badgeHeight = 22;
+
+  // Fill verified pill background and border
+  drawRoundRect(badgeX, badgeY - 2, badgeWidth, badgeHeight, 11, "rgba(63, 185, 80, 0.12)", "rgba(63, 185, 80, 0.3)", 1);
+
+  // Draw green checkmark circle
+  ctx.beginPath();
   ctx.fillStyle = "#3fb950";
-  ctx.font = "bold 44px sans-serif";
-  ctx.fillText(String(total), 60, 175);
+  ctx.arc(badgeX + 11, badgeY + 9, 6, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // Draw white checkmark inside circle
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(badgeX + 8.5, badgeY + 9);
+  ctx.lineTo(badgeX + 10.5, badgeY + 11);
+  ctx.lineTo(badgeX + 13.5, badgeY + 7);
+  ctx.stroke();
+
+  // Draw text "Verified Coder"
+  ctx.fillStyle = "#3fb950";
+  ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.fillText(badgeText, badgeX + 22, badgeY + 13);
+
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 11px sans-serif";
-  ctx.fillText("TOTAL PROBLEMS SOLVED", 60, 205);
+  ctx.font = "14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.fillText("Auto-syncing LeetCode, Codeforces & more to GitHub", 40, 85);
+
+  const total = data.syncedCount || 0;
+  const streak = data.streakCount || 0;
+  const longest = computeLongestStreak(history);
+
+  // 5. Draw rounded rectangles for the 3 main cards
+  // Card 1: Total Solved
+  drawRoundRect(40, 110, 220, 100, 8, "#161b22", "#30363d");
+  ctx.fillStyle = "#3fb950";
+  ctx.font = "bold 40px sans-serif";
+  ctx.fillText(String(total), 60, 160);
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "bold 10px sans-serif";
+  ctx.fillText("TOTAL PROBLEMS SOLVED", 60, 188);
 
   // Card 2: Current Streak
-  drawRoundRect(280, 120, 220, 110, 8, "#161b22", "#30363d");
+  drawRoundRect(280, 110, 220, 100, 8, "#161b22", "#30363d");
   ctx.fillStyle = "#ffa116";
-  ctx.font = "bold 44px sans-serif";
-  ctx.fillText(String(streak) + " 🔥", 300, 175);
+  ctx.font = "bold 40px sans-serif";
+  ctx.fillText(String(streak) + " 🔥", 300, 160);
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 11px sans-serif";
-  ctx.fillText("CURRENT STREAK", 300, 205);
+  ctx.font = "bold 10px sans-serif";
+  ctx.fillText("CURRENT STREAK", 300, 188);
 
   // Card 3: Longest Streak
-  drawRoundRect(520, 120, 240, 110, 8, "#161b22", "#30363d");
+  drawRoundRect(520, 110, 240, 100, 8, "#161b22", "#30363d");
   ctx.fillStyle = "#bc8cff";
-  ctx.font = "bold 44px sans-serif";
-  ctx.fillText(String(longest) + " 👑", 540, 175);
+  ctx.font = "bold 40px sans-serif";
+  ctx.fillText(String(longest) + " 👑", 540, 160);
   ctx.fillStyle = "#8b949e";
-  ctx.font = "bold 11px sans-serif";
-  ctx.fillText("LONGEST STREAK", 540, 205);
+  ctx.font = "bold 10px sans-serif";
+  ctx.fillText("LONGEST STREAK", 540, 188);
 
   // Platform breakdown counts
   const platformCounts = { LeetCode: 0, Codeforces: 0, GeeksforGeeks: 0, HackerRank: 0 };
@@ -1419,18 +1529,39 @@ function generateShareCardCanvas(data, history) {
     if (platformCounts[plat] !== undefined) platformCounts[plat]++;
   });
 
-  // 6. Draw Platform Activity section
-  ctx.fillStyle = "#e6edf3";
-  ctx.font = "bold 16px sans-serif";
-  ctx.fillText("Platform Activity", 40, 280);
+  const platformTotal = platformCounts.LeetCode + platformCounts.Codeforces + platformCounts.GeeksforGeeks + platformCounts.HackerRank;
 
-  ctx.font = "14px sans-serif";
-  ctx.fillStyle = "#ffa116"; ctx.fillText(`LeetCode: ${platformCounts.LeetCode}`, 40, 312);
-  ctx.fillStyle = "#58a6ff"; ctx.fillText(`Codeforces: ${platformCounts.Codeforces}`, 180, 312);
-  ctx.fillStyle = "#2ea44f"; ctx.fillText(`GeeksforGeeks: ${platformCounts.GeeksforGeeks}`, 320, 312);
-  ctx.fillStyle = "#bc8cff"; ctx.fillText(`HackerRank: ${platformCounts.HackerRank}`, 480, 312);
+  // 6. Draw Platform Activity section (Column 1: x: 40 to 260)
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "bold 10px sans-serif";
+  ctx.fillText("PLATFORMS", 40, 252);
 
-  // 7. Draw Difficulty Segregation
+  ctx.font = "12px sans-serif";
+  const platData = [
+    { name: "LeetCode", count: platformCounts.LeetCode, color: "#ffa116", bullet: "#ffa116" },
+    { name: "Codeforces", count: platformCounts.Codeforces, color: "#58a6ff", bullet: "#58a6ff" },
+    { name: "GFG", count: platformCounts.GeeksforGeeks, color: "#2ea44f", bullet: "#2ea44f" },
+    { name: "HackerRank", count: platformCounts.HackerRank, color: "#bc8cff", bullet: "#bc8cff" }
+  ];
+
+  platData.forEach((plat, i) => {
+    const py = 280 + i * 32;
+    drawBullet(45, py, plat.bullet);
+    
+    // Draw Name
+    ctx.fillStyle = "#e6edf3";
+    ctx.fillText(plat.name, 56, py);
+
+    // Draw Count
+    ctx.fillStyle = "#8b949e";
+    ctx.fillText(String(plat.count), 136, py);
+
+    // Draw progress bar
+    const pct = platformTotal > 0 ? (plat.count / platformTotal) * 100 : 0;
+    drawProgressBar(160, py - 10, 100, 5, pct, plat.color);
+  });
+
+  // 7. Draw Difficulty Segregation (Column 2: x: 320 to 520)
   const diffCounts = { Easy: 0, Medium: 0, Hard: 0 };
   history.forEach(entry => {
     if (entry.difficulty && diffCounts[entry.difficulty] !== undefined) {
@@ -1438,20 +1569,99 @@ function generateShareCardCanvas(data, history) {
     }
   });
 
-  ctx.fillStyle = "#e6edf3";
-  ctx.font = "bold 16px sans-serif";
-  ctx.fillText("Difficulty Segregation", 40, 355);
+  const diffTotal = diffCounts.Easy + diffCounts.Medium + diffCounts.Hard;
 
-  ctx.font = "14px sans-serif";
-  ctx.fillStyle = "#00b8a3"; ctx.fillText(`Easy: ${diffCounts.Easy}`, 40, 385);
-  ctx.fillStyle = "#ffa116"; ctx.fillText(`Medium: ${diffCounts.Medium}`, 180, 385);
-  ctx.fillStyle = "#ff375f"; ctx.fillText(`Hard: ${diffCounts.Hard}`, 320, 385);
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "bold 10px sans-serif";
+  ctx.fillText("DIFFICULTY SEGREGATION", 320, 252);
 
-  // 8. Draw Decorative Badge
-  drawRoundRect(720, 35, 40, 40, 8, "#58a6ff", null);
-  ctx.fillStyle = "#ffffff";
+  ctx.font = "12px sans-serif";
+  const diffData = [
+    { name: "Easy", count: diffCounts.Easy, color: "#00b8a3", bullet: "#00b8a3" },
+    { name: "Medium", count: diffCounts.Medium, color: "#ffa116", bullet: "#ffa116" },
+    { name: "Hard", count: diffCounts.Hard, color: "#ff375f", bullet: "#ff375f" }
+  ];
+
+  diffData.forEach((diff, i) => {
+    const dy = 280 + i * 32;
+    drawBullet(325, dy, diff.bullet);
+
+    // Draw Name
+    ctx.fillStyle = "#e6edf3";
+    ctx.fillText(diff.name, 336, dy);
+
+    // Draw Count
+    ctx.fillStyle = "#8b949e";
+    ctx.fillText(String(diff.count), 406, dy);
+
+    // Draw progress bar
+    const pct = diffTotal > 0 ? (diff.count / diffTotal) * 100 : 0;
+    drawProgressBar(430, dy - 10, 90, 5, pct, diff.color);
+  });
+
+  // 8. Draw Recent Problems (Column 3: x: 560 to 760)
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "bold 10px sans-serif";
+  ctx.fillText("RECENTLY SYNCED PROBLEMS", 560, 252);
+
+  const recentItems = history.slice(0, 4);
+  if (recentItems.length === 0) {
+    ctx.fillStyle = "#484f58";
+    ctx.font = "italic 12px sans-serif";
+    ctx.fillText("No problems synced yet", 560, 280);
+  } else {
+    ctx.font = "12px sans-serif";
+    recentItems.forEach((entry, i) => {
+      const ry = 280 + i * 32;
+      const plat = getPlatform(entry);
+
+      // Icon & platform identification
+      let platIcon = "🧡";
+      let platColor = "#ffa116";
+      if (plat === "Codeforces") { platIcon = "💙"; platColor = "#58a6ff"; }
+      else if (plat === "GeeksforGeeks") { platIcon = "💚"; platColor = "#2ea44f"; }
+      else if (plat === "HackerRank") { platIcon = "💜"; platColor = "#bc8cff"; }
+
+      // Draw platform icon indicator
+      ctx.fillStyle = platColor;
+      ctx.fillText(platIcon, 560, ry);
+
+      // Truncate and draw title
+      ctx.fillStyle = "#e6edf3";
+      const qId = entry.questionId ? `#${entry.questionId} ` : "";
+      const fullTitle = `${qId}${entry.title || "—"}`;
+      const truncTitle = truncateText(fullTitle, 135);
+      ctx.fillText(truncTitle, 578, ry);
+
+      // Draw mini difficulty badge
+      const diff = entry.difficulty || "Easy";
+      let diffColor = "#00b8a3";
+      if (diff === "Medium") diffColor = "#ffa116";
+      else if (diff === "Hard") diffColor = "#ff375f";
+
+      drawRoundRect(725, ry - 11, 35, 14, 3, "rgba(0, 0, 0, 0.3)", diffColor, 1);
+      ctx.fillStyle = diffColor;
+      ctx.font = "bold 9px sans-serif";
+      ctx.fillText(diff.slice(0, 3).toUpperCase(), 733, ry - 1);
+      
+      // Reset font back for the next line
+      ctx.font = "12px sans-serif";
+    });
+  }
+
+  // 8b. Draw User Name Tag Pill (aligned nicely in top right)
+  const userName = data.displayName || data.ghOwner || "Coder";
+  ctx.font = "bold 13px sans-serif";
+  const nameWidth = ctx.measureText(userName).width;
+  const pillWidth = nameWidth + 24;
+  const pillHeight = 26;
+  const pillX = 760 - pillWidth;
+  const pillY = 38;
+  drawRoundRect(pillX, pillY, pillWidth, pillHeight, 6, "#161b22", "#30363d");
+
+  ctx.fillStyle = "#58a6ff";
   ctx.font = "bold 12px sans-serif";
-  ctx.fillText("C2G", 728, 59);
+  ctx.fillText(userName, pillX + 12, pillY + 17);
 
   // 9. Draw Footer
   ctx.fillStyle = "#484f58";

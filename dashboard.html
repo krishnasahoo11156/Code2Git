@@ -576,7 +576,7 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-    .share-platforms-list {
+    .share-platforms-list, .share-difficulty-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -584,6 +584,19 @@
       border: 1px solid var(--border2);
       border-radius: var(--radius-sm);
       padding: 14px;
+    }
+    .share-platform-bar-track {
+      width: 80px;
+      height: 5px;
+      background: var(--bg);
+      border-radius: 3px;
+      overflow: hidden;
+      display: inline-block;
+    }
+    .share-platform-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.8s ease;
     }
     .share-platform-row {
       display: flex;
@@ -755,7 +768,16 @@
   <div class="share-row animate delay-4">
     <div class="share-card">
       <div class="share-card-header">
-        <div class="section-title" style="margin:0">🏆 Share Your Achievements</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="section-title" style="margin:0">🏆 Share Your Achievements</div>
+          <span class="badge" style="background:rgba(57,211,83,0.15); color:var(--green); border:1px solid rgba(57,211,83,0.3); font-size:10px; padding:2px 6px; display:inline-flex; align-items:center; gap:4px; border-radius:12px; text-transform:none; font-weight:600; cursor:default;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            Verified Coder
+          </span>
+          <span id="shareUserBadge" class="badge" style="background:rgba(88,166,255,0.12); color:var(--accent); border:1px solid rgba(88,166,255,0.2); font-size:10px; padding:2px 6px; display:none; align-items:center; gap:4px; border-radius:12px; text-transform:none; font-weight:600; cursor:default;"></span>
+        </div>
         <div class="share-btn-wrapper">
           <button id="btnShareAchievements" class="btn-share">
             <svg class="share-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -802,21 +824,73 @@
           </div>
           
           <div class="share-platforms-list">
+            <div class="section-title" style="font-size:10px; margin-bottom:8px; border:none; letter-spacing:0.05em; color:var(--text-muted);">Platforms</div>
             <div class="share-platform-row">
               <div class="share-platform-name">🟠 LeetCode</div>
-              <div class="share-platform-count" id="shareCountLeetCode">0</div>
+              <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
+                <div class="share-platform-bar-track">
+                  <div class="share-platform-bar-fill" id="sharePlatformBarLeetCode" style="width:0%; background:#ffa116;"></div>
+                </div>
+                <div class="share-platform-count" id="shareCountLeetCode">0</div>
+              </div>
             </div>
             <div class="share-platform-row">
               <div class="share-platform-name">🔵 Codeforces</div>
-              <div class="share-platform-count" id="shareCountCodeforces">0</div>
+              <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
+                <div class="share-platform-bar-track">
+                  <div class="share-platform-bar-fill" id="sharePlatformBarCodeforces" style="width:0%; background:#58a6ff;"></div>
+                </div>
+                <div class="share-platform-count" id="shareCountCodeforces">0</div>
+              </div>
             </div>
             <div class="share-platform-row">
               <div class="share-platform-name">🟢 GeeksforGeeks</div>
-              <div class="share-platform-count" id="shareCountGeeksforGeeks">0</div>
+              <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
+                <div class="share-platform-bar-track">
+                  <div class="share-platform-bar-fill" id="sharePlatformBarGeeksforGeeks" style="width:0%; background:#2ea44f;"></div>
+                </div>
+                <div class="share-platform-count" id="shareCountGeeksforGeeks">0</div>
+              </div>
             </div>
             <div class="share-platform-row">
               <div class="share-platform-name">🟣 HackerRank</div>
-              <div class="share-platform-count" id="shareCountHackerRank">0</div>
+              <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
+                <div class="share-platform-bar-track">
+                  <div class="share-platform-bar-fill" id="sharePlatformBarHackerRank" style="width:0%; background:#bc8cff;"></div>
+                </div>
+                <div class="share-platform-count" id="shareCountHackerRank">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="share-difficulty-list">
+            <div class="section-title" style="font-size:10px; margin-bottom:8px; border:none; letter-spacing:0.05em; color:var(--text-muted);">Difficulty Segregation</div>
+            <div class="share-platform-row">
+              <div class="share-platform-name"><span style="color:var(--easy); margin-right:4px;">●</span> Easy</div>
+              <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
+                <div class="share-platform-bar-track">
+                  <div class="share-platform-bar-fill" id="shareDiffBarEasy" style="width:0%; background:var(--easy);"></div>
+                </div>
+                <div class="share-platform-count" id="shareCountEasy">0</div>
+              </div>
+            </div>
+            <div class="share-platform-row">
+              <div class="share-platform-name"><span style="color:var(--medium); margin-right:4px;">●</span> Medium</div>
+              <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
+                <div class="share-platform-bar-track">
+                  <div class="share-platform-bar-fill" id="shareDiffBarMedium" style="width:0%; background:var(--medium);"></div>
+                </div>
+                <div class="share-platform-count" id="shareCountMedium">0</div>
+              </div>
+            </div>
+            <div class="share-platform-row">
+              <div class="share-platform-name"><span style="color:var(--hard); margin-right:4px;">●</span> Hard</div>
+              <div style="display:flex; align-items:center; gap:10px; flex:1; justify-content:flex-end;">
+                <div class="share-platform-bar-track">
+                  <div class="share-platform-bar-fill" id="shareDiffBarHard" style="width:0%; background:var(--hard);"></div>
+                </div>
+                <div class="share-platform-count" id="shareCountHard">0</div>
+              </div>
             </div>
           </div>
         </div>

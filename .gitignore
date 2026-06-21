@@ -1,0 +1,17 @@
+# Build Artifacts
+Code2Git-extension.zip
+
+# Logs and Debug outputs
+firebase-debug.log
+*.log
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# Developer IDE configs
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln

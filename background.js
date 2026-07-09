@@ -416,6 +416,16 @@ async function pushToGithub(details, submissionId) {
         message: "No write access to this repository. Check your token's 'repo' scope."
       };
     }
+    if (repoCheck.ok) {
+      const repoData = await repoCheck.json();
+      if (!repoData.permissions || !repoData.permissions.push) {
+        return {
+          ok: false,
+          retryable: false,
+          message: "No write access to this repository. Check your token's 'repo' scope."
+        };
+      }
+    }
   } catch (netErr) {
     return {
       ok: false,

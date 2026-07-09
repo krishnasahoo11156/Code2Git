@@ -275,6 +275,11 @@ async function testConnection() {
 
     if (res.ok) {
       const data = await res.json();
+      if (!data.permissions || !data.permissions.push) {
+        setGhStatus("disconnected");
+        showStatus("Connected, but token lacks push (write) permission. Check scopes.", true);
+        return;
+      }
       setGhStatus("connected");
       const visibility = data.private ? "private" : "public";
       showStatus(`✓ Connected to ${ghOwner}/${ghRepo} (${visibility} repo)`);

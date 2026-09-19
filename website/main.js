@@ -1,8 +1,9 @@
 /**
- * Code2Git Website - Main Interactive Scripts
+ * Code2Git Website - Clean Light Theme Scripts & Micro-Interactions
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  initNavbarScroll();
   initDownloadAndModal();
   initCopyButtons();
   initDemoSimulator();
@@ -11,7 +12,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ==========================================================================
-   1. Download & Installation Modal Controller
+   1. Subtle Navbar Scroll Shadow
+   ========================================================================== */
+function initNavbarScroll() {
+  const navbar = document.getElementById('navbar');
+  if (!navbar) return;
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 10) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  });
+}
+
+/* ==========================================================================
+   2. Download & Installation Modal Controller
    ========================================================================== */
 function initDownloadAndModal() {
   const backdrop = document.getElementById('installModalBackdrop');
@@ -32,10 +49,7 @@ function initDownloadAndModal() {
     if (backdrop) backdrop.classList.remove('open');
   }
 
-  // Open modal manually
   if (openModalBtn) openModalBtn.addEventListener('click', openModal);
-
-  // Close modal
   if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
   if (closeModalBtn2) closeModalBtn2.addEventListener('click', closeModal);
 
@@ -51,11 +65,9 @@ function initDownloadAndModal() {
     }
   });
 
-  // When clicking download buttons, trigger download and show modal
   downloadBtns.forEach(btn => {
     if (btn) {
-      btn.addEventListener('click', (e) => {
-        // If it's a button, trigger direct download programmatically
+      btn.addEventListener('click', () => {
         if (btn.tagName !== 'A') {
           const a = document.createElement('a');
           a.href = 'Code2Git-extension.zip';
@@ -65,19 +77,18 @@ function initDownloadAndModal() {
           document.body.removeChild(a);
         }
         
-        showToast('<i class="fa-solid fa-file-arrow-down"></i> Download started! Follow the installation steps below.');
+        showToast('<i class="fa-solid fa-check text-success"></i> Download started! Follow the steps to load unpacked.');
         
-        // Slightly delay modal popup so user sees download starting
         setTimeout(() => {
           openModal();
-        }, 400);
+        }, 300);
       });
     }
   });
 }
 
 /* ==========================================================================
-   2. Copy to Clipboard & Toast Helpers
+   3. Copy to Clipboard & Toast Notifications
    ========================================================================== */
 function initCopyButtons() {
   document.querySelectorAll('.copy-btn').forEach(btn => {
@@ -89,7 +100,6 @@ function initCopyButtons() {
         await navigator.clipboard.writeText(textToCopy);
         showToast(`<i class="fa-solid fa-check text-success"></i> Copied <code>${textToCopy}</code> to clipboard!`);
       } catch (err) {
-        // Fallback for older browsers
         const textarea = document.createElement('textarea');
         textarea.value = textToCopy;
         document.body.appendChild(textarea);
@@ -114,16 +124,16 @@ function showToast(message) {
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    toast.style.transition = 'all 0.3s ease';
+    toast.style.transform = 'translateY(10%)';
+    toast.style.transition = 'all 0.2s ease';
     setTimeout(() => {
       if (toast.parentNode) toast.parentNode.removeChild(toast);
-    }, 300);
-  }, 3500);
+    }, 200);
+  }, 3000);
 }
 
 /* ==========================================================================
-   3. Interactive Demo Simulator Logic
+   4. Interactive Demo Simulator
    ========================================================================== */
 const PLATFORM_DATA = {
   leetcode: {
@@ -252,7 +262,7 @@ function initDemoSimulator() {
     if (fileName) fileName.textContent = data.filename;
 
     if (logBox) {
-      logBox.innerHTML = `<div class="log-line text-muted">[System] Ready for simulation (${data.title}). Click button to test sync.</div>`;
+      logBox.innerHTML = `<div class="log-line text-muted">[System] Ready for simulation (${data.title}).</div>`;
     }
   }
 
@@ -267,18 +277,18 @@ function initDemoSimulator() {
     if (!data || !logBox || !runBtn) return;
 
     runBtn.disabled = true;
-    runBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing Submission...`;
+    runBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Syncing Solution...`;
 
     logBox.innerHTML = '';
     const now = () => new Date().toLocaleTimeString();
 
     const logs = [
-      { text: `[${now()}] Detecting submission on ${data.tag}...`, delay: 200 },
-      { text: `[${now()}] Status: Accepted! (Runtime: ${data.runtime}, Memory: ${data.memory})`, delay: 700, class: 'text-success' },
-      { text: `[${now()}] Code2Git Engine: Extracting code & generating README.md...`, delay: 1200 },
-      { text: `[${now()}] Connecting to GitHub REST API (Direct SSL Connection)...`, delay: 1700 },
-      { text: `[${now()}] Pushing to branch 'main': ${data.folder}${data.filename}`, delay: 2200, class: 'text-accent' },
-      { text: `[${now()}] SUCCESS! Commit #7f8a92b pushed successfully. Repository updated!`, delay: 2700, class: 'text-success' }
+      { text: `[${now()}] Submission detected on ${data.tag}...`, delay: 150 },
+      { text: `[${now()}] Status: Accepted (Runtime: ${data.runtime})`, delay: 500, class: 'text-success' },
+      { text: `[${now()}] Code2Git Engine: Parsing code & metadata...`, delay: 900 },
+      { text: `[${now()}] Connecting to GitHub REST API...`, delay: 1300 },
+      { text: `[${now()}] Pushing: ${data.folder}${data.filename}`, delay: 1700, class: 'text-accent' },
+      { text: `[${now()}] SUCCESS: Solution committed to 'main' branch.`, delay: 2100, class: 'text-success' }
     ];
 
     logs.forEach(item => {
@@ -293,13 +303,13 @@ function initDemoSimulator() {
 
     setTimeout(() => {
       runBtn.disabled = false;
-      runBtn.innerHTML = `<i class="fa-solid fa-check"></i> Simulation Complete! Run Again`;
-    }, 3000);
+      runBtn.innerHTML = `<i class="fa-solid fa-check"></i> Simulation Complete`;
+    }, 2400);
   }
 }
 
 /* ==========================================================================
-   4. FAQ Accordion Toggle
+   5. FAQ Accordion Toggle
    ========================================================================== */
 function initFaqAccordion() {
   const faqItems = document.querySelectorAll('.faq-item');
@@ -309,20 +319,15 @@ function initFaqAccordion() {
     if (question) {
       question.addEventListener('click', () => {
         const isOpen = item.classList.contains('active');
-
-        // Close all other FAQs
         faqItems.forEach(i => i.classList.remove('active'));
-
-        if (!isOpen) {
-          item.classList.add('active');
-        }
+        if (!isOpen) item.classList.add('active');
       });
     }
   });
 }
 
 /* ==========================================================================
-   5. Mobile Navigation Drawer
+   6. Mobile Navigation
    ========================================================================== */
 function initMobileNav() {
   const toggle = document.getElementById('mobileToggle');
@@ -333,15 +338,10 @@ function initMobileNav() {
       menu.classList.toggle('open');
       const icon = toggle.querySelector('i');
       if (icon) {
-        if (menu.classList.contains('open')) {
-          icon.className = 'fa-solid fa-xmark';
-        } else {
-          icon.className = 'fa-solid fa-bars';
-        }
+        icon.className = menu.classList.contains('open') ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
       }
     });
 
-    // Close menu when clicking nav link
     menu.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         menu.classList.remove('open');

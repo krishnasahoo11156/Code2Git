@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Code2Git - Direct Download & Automatic Solution Sync for LeetCode, Codeforces & GFG</title>
+  <title>Code2Git - Automated Solution Sync for LeetCode, Codeforces & GFG</title>
   <meta name="description" content="Download Code2Git extension directly. Automatically sync accepted solutions from LeetCode, Codeforces, and GeeksforGeeks to your GitHub repository in real time. 100% Client-Side & Secure.">
   <meta name="keywords" content="Code2Git, GitHub sync, LeetCode to GitHub, Codeforces to GitHub, GeeksforGeeks sync, browser extension, chrome extension direct download">
   
@@ -13,9 +13,9 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   
-  <!-- FontAwesome for Icons -->
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Stylesheet -->
@@ -26,8 +26,8 @@
   <!-- Announcement Bar -->
   <div class="announcement-bar">
     <div class="container announcement-content">
-      <span class="badge badge-accent"><i class="fa-solid fa-bolt"></i> Direct Download Available</span>
-      <span>No store approval delay! Download <strong>Code2Git v1.2.0</strong> directly & install in 30 seconds.</span>
+      <span class="badge badge-success"><i class="fa-solid fa-check"></i> Direct Unpacked Download</span>
+      <span>Download <strong>Code2Git v1.2.0</strong> directly and load unpacked in seconds.</span>
       <a href="#installation" class="announcement-link">Installation Guide <i class="fa-solid fa-arrow-right"></i></a>
     </div>
   </div>
@@ -42,22 +42,22 @@
       </a>
 
       <nav class="nav-menu" id="navMenu">
-        <a href="#features" class="nav-link"><i class="fa-solid fa-star text-muted"></i> Features</a>
-        <a href="#platforms" class="nav-link"><i class="fa-solid fa-code text-muted"></i> Platforms</a>
-        <a href="#demo" class="nav-link"><i class="fa-solid fa-play text-muted"></i> Live Demo</a>
-        <a href="#installation" class="nav-link"><i class="fa-solid fa-download text-muted"></i> Install</a>
-        <a href="#security" class="nav-link"><i class="fa-solid fa-shield-halved text-muted"></i> Security</a>
-        <a href="#faq" class="nav-link"><i class="fa-solid fa-circle-question text-muted"></i> FAQ</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#platforms" class="nav-link">Platforms</a>
+        <a href="#demo" class="nav-link">Live Demo</a>
+        <a href="#installation" class="nav-link">Installation</a>
+        <a href="#security" class="nav-link">Security</a>
+        <a href="#faq" class="nav-link">FAQ</a>
       </nav>
 
       <div class="nav-actions">
-        <a href="https://github.com/krishnasahoo11156/Code2Git" target="_blank" rel="noopener" class="btn btn-secondary btn-icon" title="View Source on GitHub">
+        <a href="https://github.com/krishnasahoo11156/Code2Git" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" title="View Source on GitHub">
           <i class="fa-brands fa-github"></i>
           <span>GitHub</span>
         </a>
-        <button id="navDownloadBtn" class="btn btn-primary btn-glow">
-          <i class="fa-solid fa-file-arrow-down"></i>
-          <span>Download Extension</span>
+        <button id="navDownloadBtn" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-download"></i>
+          <span>Download Zip</span>
         </button>
         <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
           <i class="fa-solid fa-bars"></i>
@@ -69,9 +69,6 @@
   <main>
     <!-- Hero Section -->
     <section class="hero-section">
-      <div class="hero-bg-glow hero-bg-glow-1"></div>
-      <div class="hero-bg-glow hero-bg-glow-2"></div>
-      
       <div class="container hero-container">
         <div class="hero-content">
           <div class="hero-badge">
@@ -80,38 +77,38 @@
           </div>
 
           <h1 class="hero-title">
-            Auto-Sync Your Coding Solutions <span class="text-gradient">Directly to GitHub</span>
+            Auto-sync your coding solutions directly to GitHub
           </h1>
 
           <p class="hero-description">
-            Effortlessly build your developer portfolio while solving problems on 
+            Build your developer portfolio automatically while solving problems on 
             <strong>LeetCode</strong>, <strong>Codeforces</strong>, and <strong>GeeksforGeeks</strong>. 
-            Code2Git automatically commits accepted code straight to your GitHub repository in real time.
+            Code2Git automatically commits accepted code straight to your GitHub repository.
           </p>
 
           <div class="hero-cta-group">
-            <a href="Code2Git-extension.zip" download="Code2Git-extension.zip" id="heroDownloadBtn" class="btn btn-primary btn-lg btn-glow">
+            <a href="Code2Git-extension.zip" download="Code2Git-extension.zip" id="heroDownloadBtn" class="btn btn-primary btn-lg">
               <i class="fa-solid fa-download"></i>
               <div class="btn-text-wrapper">
                 <span class="btn-main-text">Download Extension (.ZIP)</span>
-                <span class="btn-sub-text">Direct Unpacked Extension File</span>
+                <span class="btn-sub-text">Direct Unpacked Package</span>
               </div>
             </a>
 
             <button id="openInstallModalBtn" class="btn btn-secondary btn-lg">
               <i class="fa-solid fa-list-check"></i>
-              <span>3-Step Installation Guide</span>
+              <span>3-Step Install Guide</span>
             </button>
           </div>
 
           <div class="hero-meta">
-            <div class="meta-item"><i class="fa-solid fa-check-circle text-success"></i> Free & Open Source</div>
-            <div class="meta-item"><i class="fa-solid fa-lock text-success"></i> Local Encryption</div>
+            <div class="meta-item"><i class="fa-solid fa-check text-success"></i> Open Source (MIT)</div>
+            <div class="meta-item"><i class="fa-solid fa-shield-halved text-success"></i> Local Encryption</div>
             <div class="meta-item"><i class="fa-solid fa-chrome text-success"></i> Chrome, Edge & Brave</div>
           </div>
         </div>
 
-        <!-- Interactive Hero Visual / Card -->
+        <!-- Clean Interactive Code & Pipeline Card -->
         <div class="hero-visual">
           <div class="window-card">
             <div class="window-header">
@@ -121,36 +118,23 @@
                 <span class="dot dot-green"></span>
               </div>
               <div class="window-title">
-                <i class="fa-solid fa-code-branch text-accent"></i> Code2Git Realtime Pipeline
+                <i class="fa-solid fa-code-branch text-secondary"></i> Code2Git Pipeline
               </div>
               <div class="window-status">
-                <span class="status-indicator"></span> Live Active
+                <span class="status-indicator"></span> Active
               </div>
             </div>
 
             <div class="window-body">
-              <!-- Sync Flow Visualization -->
+              <!-- Sync Flow -->
               <div class="sync-pipeline">
                 <div class="pipeline-step">
                   <div class="step-icon platform-lc"><i class="fa-solid fa-code"></i></div>
                   <div class="step-info">
                     <span class="step-label">LeetCode</span>
-                    <span class="step-detail">Two Sum (Easy)</span>
+                    <span class="step-detail">Two Sum</span>
                   </div>
                   <span class="badge badge-success"><i class="fa-solid fa-check"></i> Accepted</span>
-                </div>
-
-                <div class="pipeline-arrow">
-                  <div class="pulse-line"></div>
-                  <i class="fa-solid fa-bolt arrow-icon"></i>
-                </div>
-
-                <div class="pipeline-step step-center">
-                  <img src="assets/icons/logo.png" alt="Code2Git Logo" class="pipeline-logo">
-                  <div class="step-info">
-                    <span class="step-label">Code2Git Engine</span>
-                    <span class="step-detail">Client-Side Parser</span>
-                  </div>
                 </div>
 
                 <div class="pipeline-arrow">
@@ -189,7 +173,7 @@
                   <div class="code-line"><span class="line-num">12</span> };</div>
                 </div>
                 <div class="terminal-footer">
-                  <span class="commit-status text-success"><i class="fa-solid fa-circle-check"></i> Git Commit #8f2a1b Pushed to 'main' branch successfully!</span>
+                  <span class="text-success"><i class="fa-solid fa-circle-check"></i> Pushed to 'main' branch successfully!</span>
                 </div>
               </div>
             </div>
@@ -202,9 +186,9 @@
     <section class="section section-dark" id="installation">
       <div class="container">
         <div class="section-header text-center">
-          <span class="section-tag"><i class="fa-solid fa-wrench"></i> Fast Setup</span>
-          <h2 class="section-title">Install Directly in 3 Simple Steps</h2>
-          <p class="section-subtitle">No Chrome Web Store account needed. Load unpacked extension in under 30 seconds.</p>
+          <span class="section-tag">Installation</span>
+          <h2 class="section-title">Install in 3 Simple Steps</h2>
+          <p class="section-subtitle">Load the unpacked extension directly in your browser in under 30 seconds.</p>
         </div>
 
         <div class="steps-grid">
@@ -213,7 +197,7 @@
             <div class="step-num">01</div>
             <div class="step-icon-wrapper"><i class="fa-solid fa-file-zipper"></i></div>
             <h3>Download & Extract</h3>
-            <p>Click the download button below to get <code>Code2Git-extension.zip</code> and unzip it anywhere on your computer.</p>
+            <p>Click below to download <code>Code2Git-extension.zip</code> and unzip it to any local folder on your computer.</p>
             <a href="Code2Git-extension.zip" download="Code2Git-extension.zip" class="btn btn-outline btn-sm">
               <i class="fa-solid fa-download"></i> Download Zip (727 KB)
             </a>
@@ -224,7 +208,7 @@
             <div class="step-num">02</div>
             <div class="step-icon-wrapper"><i class="fa-solid fa-toggle-on"></i></div>
             <h3>Open Extensions Page</h3>
-            <p>Open browser settings and toggle <strong>Developer Mode</strong> in the top right corner.</p>
+            <p>Open your browser extensions page and turn on <strong>Developer Mode</strong> (top-right toggle).</p>
             <div class="copy-box">
               <code>chrome://extensions</code>
               <button class="copy-btn" data-copy="chrome://extensions" title="Copy URL">
@@ -238,8 +222,8 @@
             <div class="step-num">03</div>
             <div class="step-icon-wrapper"><i class="fa-solid fa-folder-open"></i></div>
             <h3>Load Unpacked</h3>
-            <p>Click <strong>"Load unpacked"</strong> at top-left and select the extracted <code>Code2Git</code> directory. Done!</p>
-            <div class="step-badge text-success"><i class="fa-solid fa-circle-check"></i> Ready to Sync</div>
+            <p>Click <strong>"Load unpacked"</strong> at top-left and select the unzipped <code>Code2Git</code> folder. Done!</p>
+            <div class="step-badge text-success"><i class="fa-solid fa-circle-check"></i> Extension Ready</div>
           </div>
         </div>
       </div>
@@ -249,28 +233,28 @@
     <section class="section" id="demo">
       <div class="container">
         <div class="section-header text-center">
-          <span class="section-tag"><i class="fa-solid fa-laptop-code"></i> Interactive Demo</span>
-          <h2 class="section-title">Test the Realtime Solution Sync Engine</h2>
-          <p class="section-subtitle">Select a platform below and click <strong>Simulate Submission</strong> to watch Code2Git parse code and push to GitHub!</p>
+          <span class="section-tag">Interactive Demo</span>
+          <h2 class="section-title">Test the Sync Engine</h2>
+          <p class="section-subtitle">Select a platform and click <strong>Simulate Submission</strong> to watch Code2Git process and commit code.</p>
         </div>
 
         <div class="demo-wrapper">
           <!-- Platform Tabs -->
           <div class="demo-tabs">
             <button class="demo-tab active" data-platform="leetcode">
-              <span class="platform-dot lc-dot"></span> LeetCode (GraphQL API)
+              <span class="platform-dot lc-dot"></span> LeetCode
             </button>
             <button class="demo-tab" data-platform="codeforces">
-              <span class="platform-dot cf-dot"></span> Codeforces (DOM Parser)
+              <span class="platform-dot cf-dot"></span> Codeforces
             </button>
             <button class="demo-tab" data-platform="gfg">
-              <span class="platform-dot gfg-dot"></span> GeeksforGeeks (Practice Portal)
+              <span class="platform-dot gfg-dot"></span> GeeksforGeeks
             </button>
           </div>
 
           <div class="demo-card">
             <div class="demo-grid">
-              <!-- Left Side: Code Submission Simulation -->
+              <!-- Left Side: Code Simulation -->
               <div class="demo-editor-panel">
                 <div class="panel-header">
                   <div class="panel-info">
@@ -300,20 +284,20 @@ public:
                 </div>
 
                 <div class="editor-actions">
-                  <button id="runSimulateBtn" class="btn btn-primary btn-glow btn-block">
+                  <button id="runSimulateBtn" class="btn btn-primary btn-block">
                     <i class="fa-solid fa-play"></i> Simulate "Submit & Sync"
                   </button>
                 </div>
               </div>
 
-              <!-- Right Side: GitHub Sync Output Log -->
+              <!-- Right Side: GitHub Log -->
               <div class="demo-github-panel">
                 <div class="panel-header">
                   <div class="repo-info">
                     <i class="fa-brands fa-github repo-icon"></i>
                     <span>Repository: <strong>my-leetcode-solutions</strong></span>
                   </div>
-                  <span class="badge badge-accent"><i class="fa-solid fa-code-branch"></i> main</span>
+                  <span class="badge badge-accent">main</span>
                 </div>
 
                 <div class="repo-tree-box">
@@ -326,7 +310,7 @@ public:
                 </div>
 
                 <div class="sim-log-box" id="simLogBox">
-                  <div class="log-line text-muted">[System] Ready for simulation. Click "Simulate Submit & Sync" button.</div>
+                  <div class="log-line text-muted">[System] Click "Simulate Submit & Sync" to test the pipeline.</div>
                 </div>
               </div>
             </div>
@@ -339,18 +323,18 @@ public:
     <section class="section section-dark" id="platforms">
       <div class="container">
         <div class="section-header text-center">
-          <span class="section-tag"><i class="fa-solid fa-cubes"></i> Integrations</span>
-          <h2 class="section-title">Supported Coding Platforms</h2>
-          <p class="section-subtitle">Code2Git parses problem descriptions, runtime stats, and code directly from native page elements.</p>
+          <span class="section-tag">Supported Platforms</span>
+          <h2 class="section-title">Integrates with major coding portals</h2>
+          <p class="section-subtitle">Code2Git parses problem statements, metadata, and solutions natively from page elements.</p>
         </div>
 
         <div class="platforms-grid">
-          <!-- LeetCode Card -->
+          <!-- LeetCode -->
           <div class="platform-card card-lc">
-            <div class="card-badge"><i class="fa-solid fa-bolt"></i> GraphQL Sync</div>
+            <div class="card-badge">GraphQL</div>
             <div class="platform-icon"><i class="fa-solid fa-code"></i></div>
             <h3>LeetCode</h3>
-            <p>Captures problem title, slug, difficulty tag, submission code, time complexity, and memory metrics using native GraphQL queries.</p>
+            <p>Fetches problem title, slug, difficulty tag, submission code, time complexity, and memory metrics via GraphQL.</p>
             <ul class="feature-bullets">
               <li><i class="fa-solid fa-check text-success"></i> Auto creates <code>README.md</code> with problem description</li>
               <li><i class="fa-solid fa-check text-success"></i> Supports Python, C++, Java, JS, Go, Rust, SQL</li>
@@ -358,25 +342,25 @@ public:
             </ul>
           </div>
 
-          <!-- Codeforces Card -->
+          <!-- Codeforces -->
           <div class="platform-card card-cf">
-            <div class="card-badge"><i class="fa-solid fa-microchip"></i> DOM Parser</div>
+            <div class="card-badge">DOM Scraper</div>
             <div class="platform-icon"><i class="fa-solid fa-fire"></i></div>
             <h3>Codeforces</h3>
-            <p>Parses contest submissions and problem set solutions right from your submission detail dialogs without rate-limiting.</p>
+            <p>Parses contest submissions and problem set solutions right from submission detail popups.</p>
             <ul class="feature-bullets">
               <li><i class="fa-solid fa-check text-success"></i> Contest problem ID format (e.g. <code>1800A</code>)</li>
-              <li><i class="fa-solid fa-check text-success"></i> Execution time & memory used metrics</li>
+              <li><i class="fa-solid fa-check text-success"></i> Execution time & memory metrics</li>
               <li><i class="fa-solid fa-check text-success"></i> Div 1 / Div 2 / Div 3 contest support</li>
             </ul>
           </div>
 
-          <!-- GeeksforGeeks Card -->
+          <!-- GeeksforGeeks -->
           <div class="platform-card card-gfg">
-            <div class="card-badge"><i class="fa-solid fa-plug"></i> Practice API</div>
+            <div class="card-badge">Practice API</div>
             <div class="platform-icon"><i class="fa-solid fa-brain"></i></div>
             <h3>GeeksforGeeks</h3>
-            <p>Injects DOM execution listeners on GFG Practice portal to instantly catch accepted submissions and sync seamlessly.</p>
+            <p>Injects DOM execution listeners on the GFG Practice portal to catch accepted submissions instantly.</p>
             <ul class="feature-bullets">
               <li><i class="fa-solid fa-check text-success"></i> Realtime DOM hook injection</li>
               <li><i class="fa-solid fa-check text-success"></i> Practice portal & company tagged questions</li>
@@ -391,88 +375,88 @@ public:
     <section class="section" id="features">
       <div class="container">
         <div class="section-header text-center">
-          <span class="section-tag"><i class="fa-solid fa-layer-group"></i> Capabilities</span>
-          <h2 class="section-title">Built for Power Developers</h2>
-          <p class="section-subtitle">Everything you need to showcase your coding journey automatically on GitHub.</p>
+          <span class="section-tag">Capabilities</span>
+          <h2 class="section-title">Built for daily coding practice</h2>
+          <p class="section-subtitle">Key features designed to keep your GitHub portfolio organized and up to date.</p>
         </div>
 
         <div class="features-grid">
           <div class="feature-card">
-            <div class="f-icon"><i class="fa-solid fa-wand-magic-sparkles text-accent"></i></div>
-            <h3>Auto Repo Creation</h3>
-            <p>No need to create a repository beforehand. Code2Git creates specified repositories (e.g. <code>leetcode-solutions</code>) automatically via GitHub REST API if they don't exist.</p>
+            <div class="f-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+            <h3>Automatic Repo Creation</h3>
+            <p>If specified repository does not exist on GitHub, Code2Git creates it automatically via GitHub REST API.</p>
           </div>
 
           <div class="feature-card">
-            <div class="f-icon"><i class="fa-solid fa-key text-warning"></i></div>
-            <h3>OAuth & PAT Dual Support</h3>
-            <p>Authenticate safely using GitHub OAuth Device Flow with 1-click authorization codes or standard Personal Access Tokens with <code>repo</code> scope.</p>
+            <div class="f-icon"><i class="fa-solid fa-key"></i></div>
+            <h3>OAuth & PAT Support</h3>
+            <p>Connect securely using 1-click GitHub OAuth Device Flow or Personal Access Tokens with <code>repo</code> scope.</p>
           </div>
 
           <div class="feature-card">
-            <div class="f-icon"><i class="fa-solid fa-chart-line text-success"></i></div>
-            <h3>Interactive Stats Dashboard</h3>
-            <p>Access a built-in dashboard featuring your overall submission stats, platform distributions, language breakdown chart, and streak counters.</p>
+            <div class="f-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <h3>Stats Dashboard</h3>
+            <p>Built-in dashboard displaying total solved problems, platform distribution, and activity streaks.</p>
           </div>
 
           <div class="feature-card">
-            <div class="f-icon"><i class="fa-solid fa-users text-primary"></i></div>
+            <div class="f-icon"><i class="fa-solid fa-users"></i></div>
             <h3>Private Coding Clubs</h3>
-            <p>Connect a Firebase Realtime Database URL to share rankings and build a private leaderboard with your friends or university coding club.</p>
+            <p>Connect a Firebase Realtime Database URL to share rankings and build a private leaderboard with your peer group.</p>
           </div>
 
           <div class="feature-card">
-            <div class="f-icon"><i class="fa-solid fa-folder-tree text-accent"></i></div>
-            <h3>Custom Directory Structure</h3>
-            <p>Keeps solutions organized logically with standardized folder paths (e.g. <code>LeetCode/0001-Two-Sum/Solution.py</code>) and detailed commit notes.</p>
+            <div class="f-icon"><i class="fa-solid fa-folder-tree"></i></div>
+            <h3>Clean Folder Structure</h3>
+            <p>Organizes solutions logically (e.g. <code>LeetCode/0001-Two-Sum/Solution.py</code>) with detailed commit messages.</p>
           </div>
 
           <div class="feature-card">
-            <div class="f-icon"><i class="fa-solid fa-shield-cat text-success"></i></div>
+            <div class="f-icon"><i class="fa-solid fa-shield-cat"></i></div>
             <h3>100% Client-Side Privacy</h3>
-            <p>Zero external backend servers. Your GitHub tokens stay securely encrypted within Chrome's local storage API (<code>chrome.storage.local</code>).</p>
+            <p>No central backend server. Credentials remain stored locally in Chrome storage (<code>chrome.storage.local</code>).</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Security & Privacy Deep Dive -->
+    <!-- Security & Privacy Section -->
     <section class="section section-dark" id="security">
       <div class="container">
         <div class="section-header text-center">
-          <span class="section-tag"><i class="fa-solid fa-shield-halved"></i> Privacy First</span>
+          <span class="section-tag">Privacy First</span>
           <h2 class="section-title">Zero Server Architecture</h2>
-          <p class="section-subtitle">Why developers trust Code2Git over central cloud sync services.</p>
+          <p class="section-subtitle">Your credentials and code submissions never pass through external middleman servers.</p>
         </div>
 
         <div class="security-card">
           <div class="security-grid">
             <div class="security-text">
-              <h3><i class="fa-solid fa-lock text-success"></i> Your Credentials Never Leave Your Device</h3>
-              <p>Unlike third-party sync bots that demand write access to your GitHub account on remote servers, Code2Git runs <strong>exclusively inside your local browser instance</strong>.</p>
+              <h3>Direct Browser-to-GitHub Communication</h3>
+              <p>Unlike cloud sync services that require storing your GitHub tokens on third-party servers, Code2Git runs <strong>100% locally inside your browser</strong>.</p>
               
               <div class="sec-points">
                 <div class="sec-point">
-                  <div class="sec-icon"><i class="fa-solid fa-hard-drive text-accent"></i></div>
+                  <div class="sec-icon"><i class="fa-solid fa-hard-drive"></i></div>
                   <div>
-                    <strong>Chrome Local Storage Encryption</strong>
-                    <p>Access tokens are saved locally in browser memory and only transmitted directly to <code>api.github.com</code>.</p>
+                    <strong>Local Chrome Storage</strong>
+                    <p>Tokens are saved locally in browser memory and only transmitted directly to <code>api.github.com</code>.</p>
                   </div>
                 </div>
 
                 <div class="sec-point">
-                  <div class="sec-icon"><i class="fa-solid fa-code-commit text-warning"></i></div>
+                  <div class="sec-icon"><i class="fa-solid fa-code-commit"></i></div>
                   <div>
-                    <strong>Direct GitHub REST API Communication</strong>
-                    <p>Commits are made straight from your browser to GitHub via standard HTTPS REST calls. No middleman API.</p>
+                    <strong>Direct REST API Commits</strong>
+                    <p>Commits are made straight from your local client context to GitHub over standard HTTPS.</p>
                   </div>
                 </div>
 
                 <div class="sec-point">
-                  <div class="sec-icon"><i class="fa-solid fa-eye-slash text-success"></i></div>
+                  <div class="sec-icon"><i class="fa-solid fa-eye-slash"></i></div>
                   <div>
-                    <strong>Zero Telemetry & Tracking</strong>
-                    <p>No analytics cookies, no user tracking, no third-party telemetry. 100% transparent and open source.</p>
+                    <strong>Zero Telemetry</strong>
+                    <p>No tracking scripts, no third-party cookies, and no analytics collection.</p>
                   </div>
                 </div>
               </div>
@@ -483,7 +467,7 @@ public:
               <table class="comp-table">
                 <thead>
                   <tr>
-                    <th>Security Feature</th>
+                    <th>Security Aspect</th>
                     <th>Code2Git</th>
                     <th>Other Extensions</th>
                   </tr>
@@ -491,23 +475,23 @@ public:
                 <tbody>
                   <tr>
                     <td>Middleman Server</td>
-                    <td class="text-success"><i class="fa-solid fa-circle-xmark"></i> None (100% Client)</td>
-                    <td class="text-danger"><i class="fa-solid fa-circle-check"></i> Required</td>
+                    <td class="text-success"><i class="fa-solid fa-check"></i> None (100% Local)</td>
+                    <td class="text-danger"><i class="fa-solid fa-xmark"></i> Required</td>
                   </tr>
                   <tr>
                     <td>Token Storage</td>
-                    <td class="text-success"><i class="fa-solid fa-shield"></i> Local Browser Only</td>
-                    <td class="text-warning"><i class="fa-solid fa-server"></i> Cloud Database</td>
+                    <td class="text-success"><i class="fa-solid fa-check"></i> Browser Only</td>
+                    <td class="text-warning">Cloud Database</td>
                   </tr>
                   <tr>
-                    <td>Open Source Code</td>
-                    <td class="text-success"><i class="fa-solid fa-circle-check"></i> Fully Audit-able</td>
-                    <td class="text-danger"><i class="fa-solid fa-circle-xmark"></i> Closed Source</td>
+                    <td>Source Code</td>
+                    <td class="text-success"><i class="fa-solid fa-check"></i> Open Source (MIT)</td>
+                    <td class="text-danger"><i class="fa-solid fa-xmark"></i> Closed Source</td>
                   </tr>
                   <tr>
-                    <td>Cost / License</td>
-                    <td class="text-success"><i class="fa-solid fa-heart"></i> 100% Free MIT</td>
-                    <td class="text-warning"><i class="fa-solid fa-credit-card"></i> Freemium / Paid</td>
+                    <td>Cost</td>
+                    <td class="text-success"><i class="fa-solid fa-check"></i> 100% Free</td>
+                    <td class="text-warning">Paid / Freemium</td>
                   </tr>
                 </tbody>
               </table>
@@ -521,39 +505,39 @@ public:
     <section class="section" id="faq">
       <div class="container">
         <div class="section-header text-center">
-          <span class="section-tag"><i class="fa-solid fa-circle-question"></i> Help Center</span>
+          <span class="section-tag">Help Center</span>
           <h2 class="section-title">Frequently Asked Questions</h2>
-          <p class="section-subtitle">Everything you need to know about downloading and running Code2Git.</p>
+          <p class="section-subtitle">Common questions about installing and using Code2Git.</p>
         </div>
 
         <div class="faq-list">
           <div class="faq-item">
             <button class="faq-question">
-              <span>Why install directly via ZIP instead of Chrome Web Store?</span>
+              <span>Why install directly via ZIP file?</span>
               <i class="fa-solid fa-chevron-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Direct installation allows you to get instant updates, full developer transparency, and run the latest extension code without waiting for Chrome Web Store approval delays. You have 100% control over the unpacked code running in your browser.</p>
+              <p>Direct installation allows you to get instant updates, inspect the uncompiled open-source code yourself, and run the extension without waiting for store publishing delays.</p>
             </div>
           </div>
 
           <div class="faq-item">
             <button class="faq-question">
-              <span>Will my GitHub token or login credentials be safe?</span>
+              <span>Are my GitHub tokens safe?</span>
               <i class="fa-solid fa-chevron-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Yes, absolutely. Code2Git stores your GitHub Personal Access Token (PAT) or OAuth token strictly in Chrome's <code>chrome.storage.local</code> memory space. It is never transmitted anywhere except directly to <code>api.github.com</code>.</p>
+              <p>Yes. Code2Git stores your GitHub Personal Access Token (PAT) or OAuth token strictly in Chrome's <code>chrome.storage.local</code>. It is only sent directly to official GitHub API endpoints.</p>
             </div>
           </div>
 
           <div class="faq-item">
             <button class="faq-question">
-              <span>What happens if the target GitHub repository doesn't exist?</span>
+              <span>What if the target repository doesn't exist?</span>
               <i class="fa-solid fa-chevron-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Code2Git will automatically create the repository for you under your GitHub account upon saving your settings or when your first submission is synced!</p>
+              <p>Code2Git will automatically create the repository under your GitHub account when your first accepted solution is synced.</p>
             </div>
           </div>
 
@@ -563,17 +547,7 @@ public:
               <i class="fa-solid fa-chevron-down faq-icon"></i>
             </button>
             <div class="faq-answer">
-              <p>Code2Git works on any Chromium-based browser supporting Manifest V3, including Google Chrome, Microsoft Edge, Brave, Opera, Vivaldi, and Arc.</p>
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>Does it sync past submissions retroactively?</span>
-              <i class="fa-solid fa-chevron-down faq-icon"></i>
-            </button>
-            <div class="faq-answer">
-              <p>Code2Git automatically syncs every submission you make going forward. You can also re-submit previous accepted solutions on LeetCode/Codeforces/GFG to push them into your repository immediately.</p>
+              <p>Code2Git works on any modern Chromium-based browser supporting Manifest V3, including Google Chrome, Microsoft Edge, Brave, Opera, and Vivaldi.</p>
             </div>
           </div>
         </div>
@@ -584,16 +558,15 @@ public:
     <section class="section section-cta">
       <div class="container">
         <div class="cta-box">
-          <div class="cta-bg-glow"></div>
           <div class="cta-content text-center">
-            <h2 class="cta-title">Ready to Automate Your GitHub Coding Portfolio?</h2>
-            <p class="cta-subtitle">Download Code2Git right now and start committing every accepted solution automatically.</p>
+            <h2 class="cta-title">Start syncing your solutions today</h2>
+            <p class="cta-subtitle">Download Code2Git and automatically commit your accepted code to GitHub.</p>
             <div class="cta-actions">
-              <a href="Code2Git-extension.zip" download="Code2Git-extension.zip" class="btn btn-primary btn-xl btn-glow">
+              <a href="Code2Git-extension.zip" download="Code2Git-extension.zip" class="btn btn-primary btn-xl">
                 <i class="fa-solid fa-download"></i> Download Extension (.ZIP)
               </a>
               <a href="https://github.com/krishnasahoo11156/Code2Git" target="_blank" rel="noopener" class="btn btn-outline btn-xl">
-                <i class="fa-brands fa-github"></i> Star on GitHub
+                <i class="fa-brands fa-github"></i> View on GitHub
               </a>
             </div>
           </div>
@@ -619,12 +592,12 @@ public:
           <a href="#features">Features</a>
           <a href="#platforms">Platforms</a>
           <a href="#demo">Live Demo</a>
-          <a href="#installation">Install Guide</a>
+          <a href="#installation">Installation</a>
         </div>
         <div class="footer-col">
           <h4>Resources</h4>
           <a href="https://github.com/krishnasahoo11156/Code2Git" target="_blank">GitHub Repository</a>
-          <a href="Code2Git-extension.zip" download="Code2Git-extension.zip">Direct Zip Download</a>
+          <a href="Code2Git-extension.zip" download="Code2Git-extension.zip">Direct Download</a>
           <a href="#security">Security Model</a>
           <a href="#faq">FAQ</a>
         </div>
@@ -637,8 +610,8 @@ public:
     </div>
     <div class="footer-bottom">
       <div class="container footer-bottom-content">
-        <p>&copy; 2026 Code2Git. Open Source Project under MIT License.</p>
-        <p>Built with <i class="fa-solid fa-heart text-danger"></i> for competitive programmers everywhere.</p>
+        <p>&copy; 2026 Code2Git. Open Source under MIT License.</p>
+        <p>Built for developers and competitive programmers.</p>
       </div>
     </div>
   </footer>
@@ -649,7 +622,7 @@ public:
       <div class="modal-header">
         <div class="modal-title">
           <i class="fa-solid fa-download text-accent"></i>
-          <span>How to Install Code2Git (Unpacked Extension)</span>
+          <span>How to Install Unpacked Extension</span>
         </div>
         <button class="modal-close" id="closeInstallModalBtn" aria-label="Close modal">
           <i class="fa-solid fa-xmark"></i>
@@ -658,15 +631,15 @@ public:
 
       <div class="modal-body">
         <div class="modal-alert">
-          <i class="fa-solid fa-lightbulb text-warning"></i>
+          <i class="fa-solid fa-circle-info text-warning"></i>
           <div>
-            <strong>Direct Zip Download Ready</strong>: Click below to download <code>Code2Git-extension.zip</code>, then follow these 3 quick steps in your browser:
+            Follow these 3 simple steps to load <code>Code2Git-extension.zip</code> in your browser:
           </div>
         </div>
 
         <div class="modal-download-box">
-          <a href="Code2Git-extension.zip" download="Code2Git-extension.zip" class="btn btn-primary btn-glow btn-block">
-            <i class="fa-solid fa-file-arrow-down"></i> Click Here to Download Extension (.ZIP)
+          <a href="Code2Git-extension.zip" download="Code2Git-extension.zip" class="btn btn-primary btn-block">
+            <i class="fa-solid fa-download"></i> Download Extension (.ZIP)
           </a>
         </div>
 
@@ -675,7 +648,7 @@ public:
             <div class="m-step-num">1</div>
             <div class="m-step-content">
               <h4>Extract the Zip File</h4>
-              <p>Unzip <code>Code2Git-extension.zip</code> into any folder on your PC (e.g. <code>C:\Downloads\Code2Git</code>).</p>
+              <p>Unzip <code>Code2Git-extension.zip</code> to any local folder on your computer.</p>
             </div>
           </div>
 
@@ -683,7 +656,7 @@ public:
             <div class="m-step-num">2</div>
             <div class="m-step-content">
               <h4>Open Extensions & Enable Developer Mode</h4>
-              <p>Open a new tab and visit your browser's extension page, then turn on <strong>Developer Mode</strong> (top right toggle button):</p>
+              <p>Visit your browser extension manager and toggle <strong>Developer Mode</strong> on (top-right):</p>
               <div class="browser-urls">
                 <div class="url-chip">
                   <span>Chrome:</span> <code>chrome://extensions</code>
@@ -705,14 +678,14 @@ public:
             <div class="m-step-num">3</div>
             <div class="m-step-content">
               <h4>Click "Load Unpacked"</h4>
-              <p>Click the <strong>"Load unpacked"</strong> button in the top left corner and select the unzipped <code>Code2Git</code> folder.</p>
+              <p>Click <strong>"Load unpacked"</strong> in the top-left corner and select your unzipped <code>Code2Git</code> directory.</p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="closeInstallModalBtn2">Got it, thanks!</button>
+        <button class="btn btn-secondary" id="closeInstallModalBtn2">Close</button>
       </div>
     </div>
   </div>

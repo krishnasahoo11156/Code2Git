@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "LeetCode → GitHub Auto Sync",
+  "name": "Code2Git - Auto Sync DSA to GitHub",
   "version": "1.0.0",
-  "description": "Automatically push your accepted LeetCode solutions to a GitHub repository. 100% client-side — your credentials never leave your browser.",
+  "description": "Automatically sync DSA problems solved across coding platforms (LeetCode, GFG, Codeforces) directly to your GitHub repository.",
   "permissions": [
     "storage",
     "activeTab",

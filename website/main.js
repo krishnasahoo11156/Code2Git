@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ==========================================================================
-   1. Scroll Reveal Animations (IntersectionObserver)
+   1. Scroll Reveal Animations (IntersectionObserver - Lightweight 60fps)
    ========================================================================== */
 function initScrollReveal() {
   const revealElements = document.querySelectorAll('.reveal-on-scroll');
@@ -23,8 +23,8 @@ function initScrollReveal() {
 
   const observerOptions = {
     root: null,
-    rootMargin: '0px 0px -40px 0px',
-    threshold: 0.1
+    rootMargin: '0px 0px -20px 0px',
+    threshold: 0.05
   };
 
   const revealObserver = new IntersectionObserver((entries, observer) => {
@@ -40,7 +40,7 @@ function initScrollReveal() {
 }
 
 /* ==========================================================================
-   2. Micro Cursor Parallax / Subtle 3D Tilt
+   2. Micro Cursor Parallax / Lightweight Hardware-Accelerated Hover
    ========================================================================== */
 function initSubtleTilt() {
   if (window.matchMedia('(hover: hover) and (pointer: fine)').matches === false) return;
@@ -48,38 +48,59 @@ function initSubtleTilt() {
   const tiltCards = document.querySelectorAll('.tilt-card');
 
   tiltCards.forEach(card => {
+    let rect = null;
+    let ticking = false;
+
+    card.addEventListener('mouseenter', () => {
+      rect = card.getBoundingClientRect();
+    }, { passive: true });
+
     card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      if (!rect || ticking) return;
+      
+      ticking = true;
+      requestAnimationFrame(() => {
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
 
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
 
-      const rotateX = ((y - centerY) / centerY) * -2.5;
-      const rotateY = ((x - centerX) / centerX) * 2.5;
+        const rotateX = ((y - centerY) / centerY) * -1.5;
+        const rotateY = ((x - centerX) / centerX) * 1.5;
 
-      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-2px)`;
-    });
+        card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-2px)`;
+        ticking = false;
+      });
+    }, { passive: true });
 
     card.addEventListener('mouseleave', () => {
+      rect = null;
       card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
     });
   });
 }
 
 /* ==========================================================================
-   3. Navbar Scroll Observer
+   3. Navbar Scroll Observer (Throttled via requestAnimationFrame)
    ========================================================================== */
 function initNavbarScroll() {
   const navbar = document.getElementById('navbar');
   if (!navbar) return;
 
+  let ticking = false;
+
   window.addEventListener('scroll', () => {
-    if (window.scrollY > 10) {
-      navbar.classList.add('scrolled');
-    } else {
-      navbar.classList.remove('scrolled');
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        if (window.scrollY > 10) {
+          navbar.classList.add('scrolled');
+        } else {
+          navbar.classList.remove('scrolled');
+        }
+        ticking = false;
+      });
+      ticking = true;
     }
   }, { passive: true });
 }

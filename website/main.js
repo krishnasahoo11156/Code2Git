@@ -1,9 +1,12 @@
 /**
- * Code2Git Website - Clean Light Theme Scripts & Micro-Interactions
+ * Code2Git Website - Strict Monochrome Scripts & Interactions
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  initScrollReveal();
+  initSubtleTilt();
   initNavbarScroll();
+  initSmoothScroll();
   initDownloadAndModal();
   initCopyButtons();
   initDemoSimulator();
@@ -12,7 +15,61 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ==========================================================================
-   1. Subtle Navbar Scroll Shadow
+   1. Scroll Reveal Animations (IntersectionObserver)
+   ========================================================================== */
+function initScrollReveal() {
+  const revealElements = document.querySelectorAll('.reveal-on-scroll');
+  if (!revealElements.length) return;
+
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px 0px -40px 0px',
+    threshold: 0.1
+  };
+
+  const revealObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  revealElements.forEach(el => revealObserver.observe(el));
+}
+
+/* ==========================================================================
+   2. Micro Cursor Parallax / Subtle 3D Tilt
+   ========================================================================== */
+function initSubtleTilt() {
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches === false) return;
+
+  const tiltCards = document.querySelectorAll('.tilt-card');
+
+  tiltCards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = ((y - centerY) / centerY) * -2.5;
+      const rotateY = ((x - centerX) / centerX) * 2.5;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-2px)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+    });
+  });
+}
+
+/* ==========================================================================
+   3. Navbar Scroll Observer
    ========================================================================== */
 function initNavbarScroll() {
   const navbar = document.getElementById('navbar');
@@ -24,11 +81,36 @@ function initNavbarScroll() {
     } else {
       navbar.classList.remove('scrolled');
     }
+  }, { passive: true });
+}
+
+/* ==========================================================================
+   4. Smooth Scroll for Anchor Links
+   ========================================================================== */
+function initSmoothScroll() {
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      const targetId = this.getAttribute('href');
+      if (targetId === '#' || !targetId.startsWith('#')) return;
+
+      const targetEl = document.querySelector(targetId);
+      if (targetEl) {
+        e.preventDefault();
+        const headerOffset = 70;
+        const elementPosition = targetEl.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    });
   });
 }
 
 /* ==========================================================================
-   2. Download & Installation Modal Controller
+   5. Download & Modal Controller
    ========================================================================== */
 function initDownloadAndModal() {
   const backdrop = document.getElementById('installModalBackdrop');
@@ -77,7 +159,7 @@ function initDownloadAndModal() {
           document.body.removeChild(a);
         }
         
-        showToast('<i class="fa-solid fa-check text-success"></i> Download started! Follow the steps to load unpacked.');
+        showToast('<i class="fa-solid fa-circle-check"></i> Download started! Follow the steps below.');
         
         setTimeout(() => {
           openModal();
@@ -88,7 +170,7 @@ function initDownloadAndModal() {
 }
 
 /* ==========================================================================
-   3. Copy to Clipboard & Toast Notifications
+   6. Copy to Clipboard
    ========================================================================== */
 function initCopyButtons() {
   document.querySelectorAll('.copy-btn').forEach(btn => {
@@ -96,9 +178,17 @@ function initCopyButtons() {
       const textToCopy = btn.getAttribute('data-copy');
       if (!textToCopy) return;
 
+      const icon = btn.querySelector('i');
+      if (icon) {
+        icon.className = 'fa-solid fa-check text-primary';
+        setTimeout(() => {
+          icon.className = 'fa-regular fa-copy';
+        }, 2000);
+      }
+
       try {
         await navigator.clipboard.writeText(textToCopy);
-        showToast(`<i class="fa-solid fa-check text-success"></i> Copied <code>${textToCopy}</code> to clipboard!`);
+        showToast(`<i class="fa-solid fa-circle-check"></i> Copied <code>${textToCopy}</code> to clipboard!`);
       } catch (err) {
         const textarea = document.createElement('textarea');
         textarea.value = textToCopy;
@@ -106,7 +196,7 @@ function initCopyButtons() {
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        showToast(`<i class="fa-solid fa-check text-success"></i> Copied to clipboard!`);
+        showToast(`<i class="fa-solid fa-circle-check"></i> Copied to clipboard!`);
       }
     });
   });
@@ -133,7 +223,7 @@ function showToast(message) {
 }
 
 /* ==========================================================================
-   4. Interactive Demo Simulator
+   7. Interactive Demo Simulator (Strict Black & Grayish Logging)
    ========================================================================== */
 const PLATFORM_DATA = {
   leetcode: {
@@ -185,8 +275,7 @@ void solve() {
 int main() {
     int t; cin >> t;
     while (t--) solve();
-    return 0;
-}`
+    return 0;}`
   },
   gfg: {
     tag: 'GFG Practice',
@@ -284,11 +373,11 @@ function initDemoSimulator() {
 
     const logs = [
       { text: `[${now()}] Submission detected on ${data.tag}...`, delay: 150 },
-      { text: `[${now()}] Status: Accepted (Runtime: ${data.runtime})`, delay: 500, class: 'text-success' },
+      { text: `[${now()}] Status: Accepted (Runtime: ${data.runtime})`, delay: 500, class: 'text-primary' },
       { text: `[${now()}] Code2Git Engine: Parsing code & metadata...`, delay: 900 },
       { text: `[${now()}] Connecting to GitHub REST API...`, delay: 1300 },
-      { text: `[${now()}] Pushing: ${data.folder}${data.filename}`, delay: 1700, class: 'text-accent' },
-      { text: `[${now()}] SUCCESS: Solution committed to 'main' branch.`, delay: 2100, class: 'text-success' }
+      { text: `[${now()}] Pushing: ${data.folder}${data.filename}`, delay: 1700, class: 'text-secondary' },
+      { text: `[${now()}] SUCCESS: Solution committed to 'main' branch.`, delay: 2100, class: 'text-primary' }
     ];
 
     logs.forEach(item => {
@@ -309,7 +398,7 @@ function initDemoSimulator() {
 }
 
 /* ==========================================================================
-   5. FAQ Accordion Toggle
+   8. FAQ Accordion Toggle
    ========================================================================== */
 function initFaqAccordion() {
   const faqItems = document.querySelectorAll('.faq-item');
@@ -327,7 +416,7 @@ function initFaqAccordion() {
 }
 
 /* ==========================================================================
-   6. Mobile Navigation
+   9. Mobile Navigation
    ========================================================================== */
 function initMobileNav() {
   const toggle = document.getElementById('mobileToggle');

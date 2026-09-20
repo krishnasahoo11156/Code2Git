@@ -1,39 +1,35 @@
 /* ==========================================================================
-   Code2Git Website - Strict Monochrome Palette (White + Black + Grayish)
+   Code2Git Website - Toned-Down Clean Monochrome with Subtle Hero Details
    ========================================================================== */
 
 :root {
-  /* Strict Color Palette - White + Black + Grayish */
+  /* Core Base Palette - Clean White, Black & Neutral Grayish */
   --bg-body: #FFFFFF;
-  --bg-subtle: #F4F4F5;       /* Grayish 100 */
+  --bg-subtle: #F4F4F5;       /* Neutral Grayish 100 */
   --bg-card: #FFFFFF;
-  --bg-input: #E4E4E7;        /* Grayish 200 */
+  --bg-input: #E4E4E7;        /* Neutral Grayish 200 */
   
-  --border-color: #E4E4E7;    /* Grayish 200 */
-  --border-hover: #D4D4D8;    /* Grayish 300 */
-  --border-focus: #A1A1AA;    /* Grayish 400 */
+  --border-color: #E4E4E7;    /* Neutral Grayish 200 */
+  --border-hover: #D4D4D8;    /* Neutral Grayish 300 */
+  --border-focus: #A1A1AA;    /* Neutral Grayish 400 */
 
-  --text-primary: #000000;    /* Pure Black */
+  --text-primary: #0F172A;    /* Pure Dark Slate */
   --text-secondary: #18181B;  /* Shade of Black */
   --text-muted: #71717A;      /* Grayish 500 */
   --text-light: #A1A1AA;      /* Light Grayish 400 */
 
-  /* Black & Grayish Primary Brand Tokens */
+  /* Primary Brand Action Buttons */
   --color-primary: #000000;
   --color-primary-hover: #18181B;
-  
-  --color-accent: #000000;      
-  --color-accent-bg: #F4F4F5;   
-  --color-accent-border: #E4E4E7;
 
-  --color-blue: #18181B;        
-  --color-blue-bg: #F4F4F5;     
-  
-  --color-warning: #18181B;     
-  --color-warning-bg: #F4F4F5;
-  
-  --color-danger: #18181B;      
-  --color-danger-bg: #F4F4F5;
+  /* Subtle Hero Accent Details Only */
+  --color-hero-accent: #059669;       /* Soft Emerald Green for Hero Badge */
+  --color-hero-accent-bg: #ECFDF5;
+  --color-hero-accent-border: #A7F3D0;
+
+  --color-hero-blue: #2563EB;         /* Soft Blue for Top Announcement */
+  --color-hero-blue-bg: #EFF6FF;
+  --color-hero-blue-border: #BFDBFE;
 
   /* Fonts */
   --font-serif: 'Newsreader', 'Lora', Georgia, serif;
@@ -49,7 +45,7 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
-  --shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
 
   --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -130,10 +126,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .text-muted { color: var(--text-muted); }
 .text-secondary { color: var(--text-secondary); }
-.text-success { color: #000000; }
-.text-warning { color: #18181B; }
-.text-danger { color: #18181B; }
-.text-accent { color: #000000; }
+.text-success { color: var(--color-hero-accent); }
+.text-warning { color: var(--text-secondary); }
+.text-danger { color: var(--text-secondary); }
+.text-accent { color: var(--text-primary); }
 .text-white { color: #FFFFFF !important; }
 
 /* Inline Links with Underline */
@@ -149,7 +145,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   text-decoration-color: var(--color-primary);
 }
 
-/* Buttons - Black & White */
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -191,7 +187,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
 
 .btn-secondary {
   background-color: #FFFFFF;
-  color: #000000;
+  color: var(--text-primary);
   border-color: var(--border-color);
   box-shadow: var(--shadow-sm);
 }
@@ -199,7 +195,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
 .btn-secondary:hover {
   background-color: var(--bg-subtle);
   border-color: var(--border-hover);
-  color: #000000;
+  color: var(--text-primary);
   transform: translateY(-1px);
 }
 
@@ -252,7 +248,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   font-weight: 400;
 }
 
-/* Badges - Monochrome */
+/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -263,16 +259,23 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   border-radius: var(--radius-full);
 }
 
+/* Top Announcement Bar Badge (Subtle Blue Touch #1) */
+.badge-hero-announcement {
+  background-color: var(--color-hero-blue-bg);
+  color: var(--color-hero-blue);
+  border: 1px solid var(--color-hero-blue-border);
+}
+
 .badge-accent {
-  background-color: #18181B;
-  color: #FFFFFF;
-  border: 1px solid #18181B;
+  background-color: #F4F4F5;
+  color: #18181B;
+  border: 1px solid #E4E4E7;
 }
 
 .badge-success {
-  background-color: #F4F4F5;
-  color: #000000;
-  border: 1px solid #E4E4E7;
+  background-color: var(--color-hero-accent-bg);
+  color: var(--color-hero-accent);
+  border: 1px solid var(--color-hero-accent-border);
 }
 
 .badge-warning {
@@ -360,7 +363,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
 
 .brand-version {
   font-size: 0.7rem;
-  padding: 0.1rem 0.4rem;
+  padding: 0.1rem 0.45rem;
   background-color: var(--bg-subtle);
   color: var(--text-muted);
   border: 1px solid var(--border-color);
@@ -424,7 +427,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.25rem 0.75rem;
+  padding: 0.25rem 0.8rem;
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
@@ -468,24 +471,27 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   align-items: flex-start;
 }
 
+/* Hero Badge (Subtle Green Accent Touch #2) */
 .hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.3rem 0.85rem;
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-color);
+  padding: 0.35rem 0.9rem;
+  background-color: var(--color-hero-accent-bg);
+  border: 1px solid var(--color-hero-accent-border);
   border-radius: var(--radius-full);
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: #065F46;
   margin-bottom: 1.5rem;
 }
 
 .pulse-dot {
   width: 7px;
   height: 7px;
-  background-color: #000000;
+  background-color: var(--color-hero-accent);
   border-radius: 50%;
+  box-shadow: 0 0 6px rgba(5, 150, 105, 0.4);
 }
 
 .hero-title {
@@ -594,7 +600,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
 
 .window-status {
   font-size: 0.75rem;
-  color: #000000;
+  color: var(--color-hero-accent);
   display: flex;
   align-items: center;
   gap: 0.35rem;
@@ -604,7 +610,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
 .status-indicator {
   width: 6px;
   height: 6px;
-  background: #000000;
+  background: var(--color-hero-accent);
   border-radius: 50%;
 }
 
@@ -630,6 +636,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   gap: 0.65rem;
 }
 
+/* Neutral Clean Icons everywhere */
 .step-icon {
   width: 36px;
   height: 36px;
@@ -638,10 +645,16 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   align-items: center;
   justify-content: center;
   font-size: 1.05rem;
+  background: #E4E4E7;
+  color: #000000;
+  border: 1px solid #D4D4D8;
 }
 
-.platform-lc { background: #E4E4E7; color: #000000; border: 1px solid #D4D4D8; }
-.platform-gh { background: #18181B; color: #FFFFFF; border: 1px solid #18181B; }
+.platform-gh {
+  background: #18181B;
+  color: #FFFFFF;
+  border: 1px solid #18181B;
+}
 
 .step-info {
   display: flex;
@@ -683,11 +696,9 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   padding: 0 4px;
 }
 
-/* ==========================================================================
-   Code Terminal & Editor in Hero & Demo Section (Black + Grayish Monochrome)
-   ========================================================================== */
+/* Code Terminal (Matte Black & Grayish Syntax) */
 .code-terminal, .editor-box {
-  background-color: #09090B !important;   /* Matte Pure Black */
+  background-color: #09090B !important;
   color: #FAFAFA !important;
   border-radius: var(--radius-md);
   border: 1px solid #27272A !important;
@@ -696,7 +707,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
 }
 
 .terminal-bar, .editor-header {
-  background: #18181B !important;         /* Dark Shade of Black Bar */
+  background: #18181B !important;
   padding: 0.5rem 0.85rem;
   display: flex;
   justify-content: space-between;
@@ -734,17 +745,17 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
 }
 
 .line-num {
-  color: #52525B !important;               /* Grayish Line Numbers */
+  color: #52525B !important;
   width: 18px;
   text-align: right;
   user-select: none;
 }
 
-/* Syntax Highlighting (Monochrome Grayish Palette) */
-.keyword { color: #FFFFFF !weight: 600; }  /* White bold keywords */
-.class-name { color: #E4E4E7; }           /* Crisp Light Gray */
-.type { color: #A1A1AA; }                 /* Medium Grayish */
+.keyword { color: #FFFFFF; font-weight: 600; }
+.class-name { color: #E4E4E7; }
+.type { color: #A1A1AA; }
 .func { color: #FAFAFA; font-weight: 500; }
+
 .lang-badge {
   font-family: var(--font-mono);
   color: #FFFFFF !important;
@@ -891,6 +902,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   box-shadow: var(--shadow-sm);
 }
 
+/* Clean Neutral Platform Dots */
 .platform-dot {
   width: 8px;
   height: 8px;
@@ -1016,7 +1028,7 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   color: var(--text-secondary);
 }
 
-/* Supported Platforms Grid */
+/* Supported Platforms Grid (Clean Neutral Icons) */
 .platforms-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1321,9 +1333,9 @@ a:not(.btn):not(.nav-link):not(.brand-logo):not(.announcement-link):not(.yc-link
   flex-wrap: wrap;
 }
 
-/* YC-Style High-Contrast Dark Footer */
+/* YC-Style High-Contrast Pure Black Footer */
 .yc-footer {
-  background-color: #000000;              /* Pure Black */
+  background-color: #000000;
   color: #A1A1AA;
   padding: 4.5rem 0 2.25rem 0;
   font-size: 0.9rem;

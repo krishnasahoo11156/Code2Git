@@ -169,7 +169,7 @@ async function handleSubmissionSeen(submissionId, tabId) {
 
     if (result.ok) {
       // ⑤ Update persistent sync state
-      const updatedIds = [...syncedIds, submissionId].slice(-500);
+      const updatedIds = [...syncedIds, submissionId].slice(-5000);
       const { syncedCount = 0 } = await chrome.storage.local.get(["syncedCount"]);
       const newCount = syncedCount + 1;
       await chrome.storage.local.set({
@@ -355,6 +355,80 @@ function codeToBase64(str) {
   return btoa(binary);
 }
 
+// ─── Verification Caches ───────────────────────────────────────────────────
+let repoCheckCache = {};   // { "apiBase:token": timestamp }
+let branchCheckCache = {};  // { "apiBase:branch": timestamp }
+
+async function verifyRepoAccess(apiBase, headers) {
+  const cacheKey = `${apiBase}:${headers.Authorization}`;
+  if (repoCheckCache[cacheKey] && (Date.now() - repoCheckCache[cacheKey] < 10 * 60 * 1000)) {
+    return { ok: true };
+  }
+
+  try {
+    const repoCheck = await fetch(apiBase, { headers });
+    if (repoCheck.status === 401) {
+      return {
+        ok: false,
+        retryable: false,
+        message: "GitHub token is invalid or expired. Please reconnect in the popup."
+      };
+    }
+    if (repoCheck.status === 404) {
+      return {
+        ok: false,
+        retryable: false,
+        message: "Repository not found. Please create it first or check the name."
+      };
+    }
+    if (repoCheck.status === 403 || repoCheck.status === 429) {
+      const remaining = repoCheck.headers.get("X-RateLimit-Remaining");
+      if (remaining === "0" || repoCheck.status === 429) {
+        const reset = repoCheck.headers.get("X-RateLimit-Reset");
+        const resetTime = reset ? new Date(Number(reset) * 1000).toLocaleTimeString() : "soon";
+        return {
+          ok: false,
+          retryable: true,
+          message: `GitHub rate limit exceeded. Resets at ${resetTime}.`
+        };
+      }
+      const errJson = await repoCheck.json().catch(() => ({}));
+      if (errJson.message && errJson.message.toLowerCase().includes("secondary rate limit")) {
+        return {
+          ok: false,
+          retryable: true,
+          message: "GitHub secondary rate limit hit (too many rapid requests). Retrying automatically soon."
+        };
+      }
+      return {
+        ok: false,
+        retryable: false,
+        message: "No write access to this repository. Check your token's 'repo' scope."
+      };
+    }
+    if (repoCheck.ok) {
+      const repoData = await repoCheck.json();
+      if (!repoData.permissions || !repoData.permissions.push) {
+        return {
+          ok: false,
+          retryable: false,
+          message: "No write access to this repository. Check your token's 'repo' scope."
+        };
+      }
+      repoCheckCache[cacheKey] = Date.now();
+      return { ok: true };
+    }
+  } catch (netErr) {
+    return {
+      ok: false,
+      retryable: true,
+      message: `Network error reaching GitHub: ${netErr.message}`
+    };
+  }
+
+  return { ok: false, retryable: true, message: "Unexpected response checking repository access." };
+}
+
 // ─── GitHub Push ───────────────────────────────────────────────────────────
 async function pushToGithub(details, submissionId) {
   const cfg = await chrome.storage.local.get([
@@ -392,46 +466,10 @@ async function pushToGithub(details, submissionId) {
     "X-GitHub-Api-Version": "2022-11-28"
   };
 
-  // ① Validate token & repo access
-  try {
-    const repoCheck = await fetch(apiBase, { headers });
-    if (repoCheck.status === 401) {
-      return {
-        ok: false,
-        retryable: false,
-        message: "GitHub token is invalid or expired. Please reconnect in the popup."
-      };
-    }
-    if (repoCheck.status === 404) {
-      return {
-        ok: false,
-        retryable: false,
-        message: `Repository "${cfg.ghOwner}/${cfg.ghRepo}" not found. Please create it first or check the name.`
-      };
-    }
-    if (repoCheck.status === 403) {
-      return {
-        ok: false,
-        retryable: false,
-        message: "No write access to this repository. Check your token's 'repo' scope."
-      };
-    }
-    if (repoCheck.ok) {
-      const repoData = await repoCheck.json();
-      if (!repoData.permissions || !repoData.permissions.push) {
-        return {
-          ok: false,
-          retryable: false,
-          message: "No write access to this repository. Check your token's 'repo' scope."
-        };
-      }
-    }
-  } catch (netErr) {
-    return {
-      ok: false,
-      retryable: true,
-      message: `Network error reaching GitHub: ${netErr.message}`
-    };
+  // ① Validate token & repo access (using cache)
+  const repoAccess = await verifyRepoAccess(apiBase, headers);
+  if (!repoAccess.ok) {
+    return repoAccess;
   }
 
   // ② Ensure the target branch exists (auto-create from default if missing)
@@ -507,12 +545,16 @@ async function pushToGithub(details, submissionId) {
   if (putRes.status === 401) {
     return { ok: false, retryable: false, message: "GitHub token rejected. Please reconnect." };
   }
-  if (putRes.status === 403) {
+  if (putRes.status === 403 || putRes.status === 429) {
     const remaining = putRes.headers.get("X-RateLimit-Remaining");
-    if (remaining === "0") {
+    if (remaining === "0" || putRes.status === 429) {
       const reset = putRes.headers.get("X-RateLimit-Reset");
       const resetTime = reset ? new Date(Number(reset) * 1000).toLocaleTimeString() : "soon";
       return { ok: false, retryable: true, message: `GitHub rate limit exceeded. Resets at ${resetTime}.` };
+    }
+    const errJson = await putRes.json().catch(() => ({}));
+    if (errJson.message && errJson.message.toLowerCase().includes("secondary rate limit")) {
+      return { ok: false, retryable: true, message: "GitHub secondary rate limit hit (too many rapid pushes). Retrying automatically." };
     }
     return { ok: false, retryable: false, message: "GitHub push forbidden. Check token scopes." };
   }
@@ -539,6 +581,11 @@ async function pushToGithub(details, submissionId) {
 
 // ─── Branch Auto-Creation ──────────────────────────────────────────────────
 async function ensureBranchExists(headers, apiBase, branch) {
+  const cacheKey = `${apiBase}:${branch}`;
+  if (branchCheckCache[cacheKey] && (Date.now() - branchCheckCache[cacheKey] < 10 * 60 * 1000)) {
+    return;
+  }
+
   try {
     const branchRes = await fetch(
       `${apiBase}/git/ref/heads/${encodeURIComponent(branch)}`,
@@ -546,6 +593,7 @@ async function ensureBranchExists(headers, apiBase, branch) {
     );
     if (branchRes.status === 200) {
       logDebug(`Branch "${branch}" exists. ✓`);
+      branchCheckCache[cacheKey] = Date.now();
       return; // Branch already exists
     }
     if (branchRes.status !== 404) return; // Unexpected error — skip
@@ -574,6 +622,7 @@ async function ensureBranchExists(headers, apiBase, branch) {
     });
 
     if (createRes.ok) {
+      branchCheckCache[cacheKey] = Date.now();
       logDebug(`Auto-created branch "${branch}" from "${defaultBranch}". ✓`, LOG_LEVEL.SUCCESS);
     } else {
       const err = await createRes.json().catch(() => ({}));
@@ -617,7 +666,7 @@ async function appendToSyncHistory(entry) {
   try {
     const { syncHistory = [] } = await chrome.storage.local.get(["syncHistory"]);
     await chrome.storage.local.set({
-      syncHistory: [entry, ...syncHistory].slice(0, 200)
+      syncHistory: [entry, ...syncHistory].slice(0, 2000)
     });
   } catch (err) {
     logDebug(`Failed to update sync history: ${err.message}`, LOG_LEVEL.WARN);
@@ -1059,7 +1108,7 @@ async function handleHackerRankSubmission(slug, submissionId, tabId) {
     const ok = await pushMultiplatformToGithub(code, filePath, commitMessage, branch);
 
     if (ok) {
-      const updatedIds = [...syncedIds, submissionId].slice(-500);
+      const updatedIds = [...syncedIds, submissionId].slice(-5000);
       const { syncedCount = 0 } = await chrome.storage.local.get(["syncedCount"]);
       const newCount = syncedCount + 1;
       await chrome.storage.local.set({
@@ -1194,7 +1243,7 @@ async function startCodeforcesPolling(tabId) {
       const ok = await pushMultiplatformToGithub(code, filePath, commitMessage, branch);
 
       if (ok) {
-        const updatedIds = [...syncedIds, submissionId].slice(-500);
+        const updatedIds = [...syncedIds, submissionId].slice(-5000);
         const { syncedCount = 0 } = await chrome.storage.local.get(["syncedCount"]);
         const newCount = syncedCount + 1;
         await chrome.storage.local.set({
@@ -1287,7 +1336,7 @@ async function handleGfgAccepted(data, tabId) {
     const ok = await pushMultiplatformToGithub(code, filePath, commitMessage, branch);
 
     if (ok) {
-      const updatedIds = [...syncedIds, submissionId].slice(-500);
+      const updatedIds = [...syncedIds, submissionId].slice(-5000);
       const { syncedCount = 0 } = await chrome.storage.local.get(["syncedCount"]);
       const newCount = syncedCount + 1;
       await chrome.storage.local.set({

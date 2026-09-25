@@ -1,5 +1,6 @@
 # Build Artifacts
-Code2Git-extension.zip
+/Code2Git-extension.zip
+!website/Code2Git-extension.zip
 
 # Logs and Debug outputs
 firebase-debug.log

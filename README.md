@@ -10,6 +10,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Manifest-V3-brightgreen.svg" alt="Manifest V3" />
+  <img src="https://img.shields.io/badge/Platforms-LeetCode%20%7C%20Codeforces%20%7C%20GFG-orange.svg" alt="Platforms" />
   <img src="https://img.shields.io/badge/Security-100%25%20Client--Side-blue.svg" alt="Security client-side" />
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License" />
 </p>
